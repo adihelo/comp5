@@ -1,0 +1,424 @@
+%{
+	#include <iostream>
+	#include <stdlib.h>
+	#include "hw3_output.hpp"
+	#include "parser.hpp"
+	using namespace std;
+	extern int yylex();
+	extern int yylineno;
+	int yyerror(const char * message);
+
+    symbolsTable* vars_table = new symbolsTable();         // The symbols table for variables.
+    FuncsTable* funcs_table = new FuncsTable();          // The table for all functions declared.
+    vector<string> curr_func_args;   //saves the args of the function currently being declared.
+    vector<string> curr_explist;     //saves the args given to the currently called function.
+    bool while_mode = false;
+
+	
+%}
+
+%token    VOID 
+%token    INT 
+%token    BYTE 
+%token    B 
+%token    BOOL
+
+
+%token    TRUE 
+%token    FALSE 
+%token    RETURN 
+%token    WHILE 
+%token    BREAK 
+%token    CONTINUE  
+%token    SC 
+%token    COMMA 
+%token    ASSIGN
+%token    ID 
+%token    NUM 
+%token    STRING
+%token    SET;
+
+%left OR;                // changed
+%left AND;
+%left RELOPN;
+%left RELOPR;            // is RELOP == | != 
+%nonassoc     RELOPL;            // is RELOP <= | >= | > | < should be left 
+%left     ADDSUB;               // add is +/-       /// splitted BINOP
+%left     MULDIV;               // MUL is * or /
+%right    NOT;
+
+%left     LPAREN;
+%left    RPAREN;
+%nonassoc     COMMA;
+%left    LBRACE;
+%left    RBRACE;
+%left    LBRACKET;
+%left  RBRACKET;          /// not sure about LBRACKET AND LBRACKET  should be treated as LBRACE/RBARACE or LPAREN/RPAREN
+
+%left    DOTS;
+%nonassoc IF;
+%right    ELSE;
+%%
+
+Program:  Funcs
+          {
+              output::endScope();
+			  funcs_table->printTable();
+
+		  }
+		  
+Funcs :  
+		  {
+		    if(!funcs_table->checkMain()){
+               output::errorMainMissing();
+               exit(0);
+            }
+		  } 	
+
+		  | {vars_table->openScope();} FuncDecl {vars_table->closeScope();} Funcs
+		  {
+		      
+		  }
+		  
+FuncDecl: RetType ID LPAREN Formals RPAREN { funcs_table->Insert($2->name, $1->getType(), curr_func_args); } LBRACE Statements RBRACE
+		  {
+		      curr_func_args.clear();
+		  }
+
+RetType:  Type
+          {
+			  $$->type = $1->type;
+		  }
+		  | VOID
+		  {
+			  $$ = new Type("VOID");
+
+		  }
+
+Formals: 
+		  {
+
+		  }
+		  | FormalsList
+		  {
+
+
+		  }		
+
+FormalsList:FormalDecl 
+		  {
+		      
+		  }
+		  | FormalDecl COMMA FormalsList
+		  {
+		      
+		  }
+
+FormalDecl: Type ID
+		  {
+		      if(funcs_table->funcExists($2->name)){
+		          output::errorDef(yylineno, $2->name);
+		          exit(0);
+		      }
+		      vars_table->Insert($2->name, $1->type,true);
+		      curr_func_args.push_back($1->type);
+
+		  }
+		  
+Statements: Statement
+		  {
+
+		  }
+		  | Statements Statement	
+		  {
+		      
+		  }
+Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope();} RBRACE
+		  {
+		      
+		  }
+		  | Type ID SC	
+		  {
+
+		       if(vars_table->checkVariableDeclared($2->name) != "" || funcs_table->funcExists($2->name)){
+		           output::errorDef(yylineno, $2->name);
+		           exit(0);
+		       }
+		       vars_table->Insert($2->name, $1->type);
+		  }
+		  | Type ID ASSIGN Exp SC	
+		  {
+		       if(vars_table->checkVariableDeclared($2->name) != "" || funcs_table->funcExists($2->name)){
+               	   output::errorDef(yylineno, $2->name);
+               	   exit(0);
+               }
+               if($1->type != $4->type){
+                   output::errorMismatch(yylineno);
+                   exit(0);
+               }
+               vars_table->Insert($2->name, $1->type);
+		      
+		  }
+		  | ID ASSIGN Exp SC	
+		  {
+		       string id_type = vars_table->checkVariableDeclared($1->name);
+		       if(id_type == ""){
+                    output::errorUndef(yylineno, $1->name);
+                    exit(0);
+               }
+               if(id_type != $3->type && !(id_type == "INT" && $3->type == "BYTE")){
+                    output::errorMismatch(yylineno);
+                    exit(0);
+               }
+		  }	
+		  | Call SC
+		  {
+		      
+		  }
+		  | RETURN SC	
+		  {
+		      if(funcs_table->lastFuncType() != "VOID"){
+		          output::errorMismatch(yylineno);
+		          exit(0);
+		      }
+		  }
+		  | RETURN Exp SC
+		  {
+		      if(funcs_table->lastFuncType() != $2->type && ! (funcs_table->lastFuncType()== "INT" && $2->type == "BYTE")){
+              	  output::errorMismatch(yylineno);
+              	  exit(0);
+              }
+		  }
+		  | IF LPAREN ExpBool RPAREN Statement
+		  {
+		      vars_table->closeScope();
+		  }
+		  | IF LPAREN ExpBool RPAREN Statement ELSE {  vars_table->closeScope(); vars_table->openScope();} Statement
+		  {
+		      vars_table->closeScope();
+		  }
+		  | WHILE LPAREN Exp RPAREN {vars_table->openScope(); while_mode = true; } Statement
+		  {
+		      vars_table->closeScope();
+		      while_mode = false;
+		  }
+		  | BREAK SC
+		  {
+		      if(!while_mode){
+		          output::errorUnexpectedBreak(yylineno);
+		          exit(0);
+		      }
+
+		  }
+		  | CONTINUE SC
+		  {
+		      if(!while_mode){
+		          output::errorUnexpectedContinue(yylineno);
+		          exit(0);
+		      }
+
+		  }
+
+
+ExpBool: Exp{
+    if($1->type != "BOOL"){
+        output::errorMismatch(yylineno);
+        exit(0);
+    }
+    vars_table->openScope();
+}
+
+Call:      ID LPAREN Explist RPAREN
+          {
+			  $$=new Call(funcs_table->checkArgsValid($1->name,curr_explist));
+			  curr_explist.clear();
+		  }
+          | ID LPAREN RPAREN
+		  {
+			 $$=new Call(funcs_table->checkArgsValid($1->name,curr_explist));
+		  }
+
+Explist:    Exp
+          {
+	         curr_explist.push_back($1->type);
+		  }
+          | Exp COMMA Explist
+		  {
+            curr_explist.push_back($1->type);
+		  }
+
+Type :      INT
+          {
+			$$= $1;
+		  }
+          |  BYTE
+		  {
+			$$= $1;
+		  }
+          | BOOL
+		  {
+            $$= $1;
+		  }
+          | SET LBRACKET NUM DOTS NUM RBRACKET
+		  {
+			 if((dynamic_cast<Num*>$3)->getVal() <0 || (((dynamic_cast<Num*>$5)->getVal() - (dynamic_cast<Num*>$3)->getVal()) > 255) 
+             || ((dynamic_cast<Num*>$3)->getVal() >= (dynamic_cast<Num*>$5)->getVal())){
+			 output::errorSetTooLarge(yylineno,$3->name, $5->name);
+             exit(0);
+			 }
+			 $$ = new Type("SET");
+		  }
+
+Exp:        LPAREN Exp RPAREN
+          {
+			 $$=$2;
+		  }
+          | ID
+		  {
+			 string type = vars_table->checkVariableDeclared($1->name);
+             if(type == ""){
+                output::errorUndef(yylineno, $1->name);
+                exit(0);
+             }
+             $$= new Exp(type);
+		  }
+          | Call
+		  {
+			  $$=$1;
+		  }
+          | NUM
+		  {
+            $$= new Exp("INT");
+		  }
+          | NUM B
+		  {
+
+             $$= new Exp("BYTE");
+             if(dynamic_cast<Num*>$1->getVal() > 255 ){  //the stored value is name right?   //byte can't be above 255
+                output::errorByteTooLarge(yylineno, $1->name);
+                exit(0);
+             }
+		  }
+          | STRING
+		  {
+              $$= new Exp("STRING");
+		  }
+          | TRUE
+		  {
+              $$= new Exp("BOOL");
+		  }
+          | FALSE
+		  {
+              $$= new Exp("BOOL");
+		  }
+          | NOT Exp
+		  {
+            if($2->type != "BOOL"){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }else{
+                $$= new Exp("BOOL");
+            
+            }
+			  
+		  }
+          | Exp AND Exp 
+		  {
+			if(($1->type != "BOOL") || ($3->type != "BOOL")){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            $$= new Exp("BOOL");
+		  }
+          | Exp OR Exp 
+		  {
+			 if(($1->type != "BOOL") || ($3->type != "BOOL")){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            $$= new Exp("BOOL");
+		  }
+          | Exp ADDSUB Exp       //todo: need to add SET to binop
+		  {
+           
+			 if((($1->type != "INT") &&($1->type != "BYTE") &&($1->type != "SET"))  || (($3->type != "INT") &&($3->type != "BYTE") &&($3->type != "SET"))){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            if(($1->type == "SET") ||($3->type == "SET")){
+                $$= new Exp("SET");
+            }
+            else if(($1->type == "INT") ||($3->type == "INT")){
+                $$= new Exp("INT");
+            }else if($1->type == "BYTE" || $3->type == "BYTE"){
+                $$ = new Exp("BYTE");
+            }
+            else{
+                $$= new Exp("BOOL");
+            }
+            
+		  }
+          | Exp MULDIV Exp       //todo: need to add SET to binop
+		  {
+			  if((($1->type != "INT") &&($1->type != "BYTE"))  || (($3->type != "INT") &&($3->type != "BYTE"))){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            if(($1->type == "INT") ||($2->type == "INT")){
+                
+                $$= new Exp("INT");
+            }else{
+                $$= new Exp("BYTE");
+            
+            }
+		  }
+		  | Exp RELOPN Exp  //todo
+		  {
+			  if(!((($1->type=="INT")|| ($1->type =="BYTE")) && ($3->type == "SET"))){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            $$= new Exp("BOOL");
+		  }
+          | LPAREN Type RPAREN Exp 
+		  {
+          
+            if(($2->type!="INT") ||($4->type != "SET")){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            $$= new Exp("INT");
+			 
+		  }
+		  | Exp RELOPL Exp
+		  {
+			if((($1->type != "INT") &&($1->type != "BYTE"))  || (($3->type != "INT") &&($3->type != "BYTE"))  ){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            
+             $$= new Exp("BOOL");
+            
+
+		  }| Exp RELOPR Exp
+		  {
+			  if((($1->type != "INT") &&($1->type != "BYTE"))  || (($3->type != "INT") &&($3->type != "BYTE"))  ){
+                output::errorMismatch(yylineno);
+                exit(0);
+            }
+            
+                $$= new Exp("BOOL");
+		  }
+		  
+%%
+
+int main(){
+	yyparse();
+}
+		  
+int yyerror(const char * message)
+{
+
+	output::errorSyn(yylineno);
+	exit(0);
+}
