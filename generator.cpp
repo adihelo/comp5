@@ -11,9 +11,22 @@ using std::string;
 int curr_reg = 0;
 
 string freshVar() {
-    string reg = "%R";
+    string reg = "%reg";
     reg += to_string(curr_reg++);
     return reg;
+}
+
+void emitComman(const string& command){
+    buffer.emit(command);
+}
+
+void zext(string& reg_to_zext, const string& type){
+    if (type == "i1" || type == "i8"){
+        string zexted_reg = freshVar();
+        string zext_command = "  " + zexted_reg + " = zext " + type + " " + reg_to_zext + " to i32";
+        emitComman(zext_command);
+        reg_to_zext = zexted_reg;
+    }
 }
 
 string convert_to_llvm_type(const string& type){
@@ -26,6 +39,20 @@ string convert_to_llvm_type(const string& type){
     } else{
         return "i32";
     }
+}
+
+void FuncDeclAllocation(int argsNum){
+    buffer.emit("   %locals = alloca [50 x i32]");
+    if (argsNum){
+        buffer.emit("   %params = alloca [" + to_string(argsNum) + " x i32]");
+    }
+    curr_reg = argsNum +1;
+}
+
+void storeFuncArg(const string& type, const string& offset, int argsNumber){
+    string variable = freshVar();
+    buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32, [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + offset);
+
 }
 
 void llvmFuncDecl(const string& retType, const string& funcName, vector<string>& argTypes){

@@ -186,7 +186,7 @@ public:
        This function checks if a variable with var_name was declared in outer scopes and returns its type.
        Returns an empty string if wasn't found.
     */
-    string checkVariableDeclared(const string var_name){
+    string checkVariableDeclared(const string& var_name){
 
         string var_type;
         for(int i= names->size()-1 ; i>=0 ; i--){
@@ -197,6 +197,19 @@ public:
             }
         }
         return var_type;
+    }
+
+    int varGetOffset(const string& var_name){
+
+        int var_off = 0;
+        for(int i= names->size()-1 ; i>=0 ; i--){
+            for(auto & j : (*names)[i]){
+                if(j.getName() == var_name){
+                    var_off = j.getOffset();
+                }
+            }
+        }
+        return var_off;
     }
 
 };

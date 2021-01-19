@@ -3,6 +3,7 @@
 	#include <stdlib.h>
 	#include "hw3_output.hpp"
 	#include "parser.hpp"
+	#include "generator.hpp"
 	using namespace std;
 	extern int yylex();
 	extern int yylineno;
@@ -80,9 +81,20 @@ Funcs :
 		      
 		  }
 		  
-FuncDecl: RetType ID LPAREN Formals RPAREN { funcs_table->Insert($2->name, $1->getType(), curr_func_args); } LBRACE Statements RBRACE
+FuncDecl: RetType ID LPAREN Formals RPAREN
+          {
+              funcs_table->Insert($2->name, $1->getType(), curr_func_args);
+              llvmFuncDecl($1->getType(), $2->name, curr_func_args);
+              FuncDeclAllocation(curr_func_args.size());
+              for (int i=0 ; i < curr_func_args.size() ; i++){
+
+              }
+
+          } LBRACE Statements RBRACE
+
 		  {
 		      curr_func_args.clear();
+		      emitCommand("\n}\n");
 		  }
 
 RetType:  Type

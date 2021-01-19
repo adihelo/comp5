@@ -11,12 +11,15 @@
 
 string freshVar();
 string convert_to_llvm_type(const string& type);
+void emitComman(const string& command);
+void zext(string& reg_to_zext, const string& type);
+void FuncDeclAllocation(int argsNum);
+void storeFuncArg(const string& type, int offset, int argsNumber);
 
 
 
 
 /******************** LLVM functions ********************/
-
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes);
 
 
