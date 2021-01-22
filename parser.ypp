@@ -300,7 +300,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 output::errorUndef(yylineno, $1->name);
                 exit(0);
              }
-             $$= new Exp(type);
+             $$= new Exp(type, freshVar());
 		  }
           | Call //DONE
 		  {
@@ -310,7 +310,7 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | NUM//DONE
 		  {
-            $$= new Exp("INT");
+            $$= new Exp("INT", freshVar());
             Buffer.emit("%"+ dynamic_cast<Exp*>$$->reg+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
             
             
@@ -318,7 +318,7 @@ Exp:        LPAREN Exp RPAREN//Done
           | NUM B
 		  {
 
-             $$= new Exp("BYTE");
+             $$= new Exp("BYTE", freshVar());
              string value = dynamic_cast<Num*>$1->getVal();
              if(stoi(value) > 255 ){   //byte can't be above 255
                 output::errorByteTooLarge(yylineno, value);
@@ -328,7 +328,7 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | STRING //DONE
 		  {
-              $$= new Exp("STRING");
+              $$= new Exp("STRING", freshVar());
               string str=(dynamic_cast<String*>$1)->getValue(); 
               str+='\00';
               int str_size = (dynamic_cast<String*>$1)->size(); 
@@ -356,7 +356,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 output::errorMismatch(yylineno);
                 exit(0);
             }else{  //this is like the lecture, just switch the truelist/falselist
-                $$= new Exp("BOOL");
+                $$= new Exp("BOOL", freshVar());
                 buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 1, %" + (dynamic_cast<Exp*>$2)->reg);
                 (dynamic_cast<Exp*>$$)->falseList = (dynamic_cast<Exp*>$2)->trueList;  //maybe change this to something better
                 (dynamic_cast<Exp*>$$)->trueList = (dynamic_cast<Exp*>$2)->falseList;
@@ -376,7 +376,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 exit(0);
             }
        
-            $$ = new Exp("BOOL");
+            $$ = new Exp("BOOL", freshVar());
             dynamic_cast<Exp*>$$->falseList=Buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falselist);//falseList of $$ is both falselists of $1 and $4
             dynamic_cast<Exp*>$$->trueList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
 
@@ -392,7 +392,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     output::errorMismatch(yylineno);
                     exit(0);
                     }
-                    $$ = new Exp("BOOL");
+                    $$ = new Exp("BOOL", freshVar());
                     dynamic_cast<Exp*>$$->trueList=Buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falselist);//falseList of $$ is both falselists of $1 and $4
                     dynamic_cast<Exp*>$$->falseList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
 		  }
@@ -405,20 +405,22 @@ Exp:        LPAREN Exp RPAREN//Done
             }
             bool byteFlag=false;
             if(($1->type == "SET") ||($3->type == "SET")){
-                $$= new Exp("SET");
+                $$= new Exp("SET", freshVar());
             }
             else if(($1->type == "INT") ||($3->type == "INT")){
-                $$= new Exp("INT");
+                $$= new Exp("INT", freshVar());
             }else if($1->type == "BYTE" || $3->type == "BYTE"){
-                $$ = new Exp("BYTE");
+                $$ = new Exp("BYTE", freshVar());
                 byteFlag=true;
             }
             else{
                  
-                $$= new Exp("BOOL"); //check this again!!
+                $$= new Exp("BOOL", freshVar()); //check this again!!
             }
-            
-            $$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
+
+            //$$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
+
+            llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
 		  }
           | Exp MULDIV Exp       //todo: need to add SET to binop
 		  {
@@ -429,13 +431,14 @@ Exp:        LPAREN Exp RPAREN//Done
             bool byteFlag=false;
             if(($1->type == "INT") ||($2->type == "INT")){
                 
-                $$= new Exp("INT");
+                $$= new Exp("INT", freshVar());
             }else{
-                $$= new Exp("BYTE");
+                $$= new Exp("BYTE", freshVar());
                 byteFlag=true;
             
             }
-             $$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
+             //$$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
+             llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
 		  }
 		  | Exp RELOPN Exp  //todo
 		  {
@@ -443,7 +446,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 output::errorMismatch(yylineno);
                 exit(0);
             }
-            $$= new Exp("BOOL");
+            $$= new Exp("BOOL", freshVar());
 		  }
           | LPAREN Type RPAREN Exp 
 		  {
@@ -452,7 +455,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 output::errorMismatch(yylineno);
                 exit(0);
             }
-            $$= new Exp("INT");  //when casting the reg is the same as the casted exp?
+            $$= new Exp("INT", freshVar());  //when casting the reg is the same as the casted exp?
 			 
 		  }
 		  | Exp RELOPL Exp //DONE
@@ -462,7 +465,8 @@ Exp:        LPAREN Exp RPAREN//Done
                 exit(0);
             }
             
-             $$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value);
+             //$$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value);
+             llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value);
             
 
 		  }| Exp RELOPR Exp //TODO: check if we need to change binop and relop in scanner.lex
@@ -473,6 +477,7 @@ Exp:        LPAREN Exp RPAREN//Done
             }
             
                 $$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value);
+                llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value);
 		  }
 		  
 %%

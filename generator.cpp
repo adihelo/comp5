@@ -41,6 +41,29 @@ string convert_to_llvm_type(const string& type){
     }
 }
 
+string llvmOpCommand(const string& operation){
+    if (operation == "<")
+        return "slt";
+    else if (operation == "<=")
+        return "sle";
+    else if (operation == ">")
+        return  "sgt";
+    else if (operation == ">=")
+        return  "sge";
+    else if (operation == "==")
+        return  "eq";
+    else if (operation == "!=")
+        return  "ne";
+    else if (operation == "+")
+        return  "add";
+    else if (operation == "-")
+        return  "sub";
+    else if (operation == "*")
+        return  "mul";
+    else
+        return  "sdiv";
+}
+
 void FuncDeclAllocation(int argsNum){
     buffer.emit("   %locals = alloca [50 x i32]");
     if (argsNum){
@@ -65,31 +88,65 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
     buffer.emit(define_command);
 }
 
+void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 
+    result->type = "BOOL";
+    result->reg=freshVar();
+    result->falseList.clear();
+    result->trueList.clear();
+    buffer.emit("%" + result->reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
+    int line= buffer.emit("br i1 %" + result->reg + ", label @, label @");
+    result->addToFalseList(pair<int,BranchLabelIndex> (line, SECOND));
+    result->addToTrueList(pair<int,BranchLabelIndex> (line, FIRST));
+
+}
+
+void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
+    if(relop == "div"){ //div
+        buffer.emit("%"+to_string(curr_reg++)+" = icmp eq i32 0, %"+exp2->reg);
+        int line=buffer.emit("br i1 %" + result->reg + ", label @, label @");
+        buffer.bpatch(buffer.makelist(pair<int,BranchLabelIndex>(line,FIRST)),buffer.genLabel());
+        buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
+        buffer.emit("call void @exit(i32 0)");
+        int end=buffer.emit("br label @");
+        buffer.bpatch(buffer.merge(buffer.makelist(pair<int,BranchLabelIndex>(line,SECOND)),buffer.makelist(pair<int,BranchLabelIndex>(end,FIRST))),buffer.genLabel());
+
+    }
+    string str="%"+freshVar()+" = ";
+    if(relop != "div"){ //mul. +/ -
+        str += relop;
+    }
+    str+=" i32 %"+exp1->reg+", %"+exp2->reg;
+    buffer.emit(str);
+    if (isByte) //if both are byte
+    {
+
+    }
+    result->reg = freshVar(); // new reg
+}
 /*
    emit function for call
 */
-void call_emit(string func_type, string func_name, vector<pair<string,int>> var_vec){  //NEW
-        CodeBuffer& buffer = CodeBuffer::instance();
+void call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
         string emit_str;
          if (func_name=="print") { //print like descirbed in pdf.
             string size=to_string(table.lastStringSize);
             //TODO: Add like described for exit in hw5 pdf file.
-            Buffer.emit(emit_str); 
+            buffer.emit(emit_str);
             return;
         }else{
             if(func_type=="VOID"){
                 emit_str="call void";
             }else{
-                emit_str="%"+to_string(currentRegistor)+" = call i32";
-                currentRegistor++;
+                emit_str="%"+to_string(curr_reg)+" = call i32";
+                curr_reg++;
             }
             emit_str+=" @"+func_name+"(";
             if(!var_vec.empty()){
-                for (int i=0; i<vec.size()-1; i++){
-                    emit_str+="i32 %"+to_string(vec[i].second)+", ";
+                for (int i=0; i<var_vec.size()-1; i++){
+                    emit_str+="i32 %"+to_string(var_vec[i].second)+", ";
                 }
-                emit_str+="i32 %"+to_string(vec.back().second)+")";
+                emit_str+="i32 %"+to_string(var_vec.back().second)+")";
             }
             buffer.emit(emit_str);
         }

@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include "hw3_output.hpp"
+#include "generator.hpp"
 using namespace std;
 extern int yylineno;
 
@@ -45,38 +46,7 @@ public:
 };
 
 /* new class*/
-class Operation: public Node{
-  public:
-  string value;
-  explicit Operation(string value){
-    
-        if (value.compare("<")==0)
-    		  this->value="slt";
-    	else if (value.compare("<=")==0)
-    	    this->value="sle";
-    	else if (value.compare(">")==0)
-    	    this->value= "sgt";
-    	else if (value.compare(">=")==0)
-    	    this->value= "sge";
-    	else if (value.compare("==")==0)
-    	    this->value= "eq";
-    	else if (value.compare("!=")==0)
-    	    this->value= "ne";
-        else if (value.compare("+")==0)
-    		this->value= "add";
-    	else if (value.compare("-")==0)
-    	    this->value= "sub";
-    	else if (value.compare("*")==0)
-    	    this->value= "mul";
-    	else
-    	    this-> "sdiv";
-    
-   
-   
-  }
 
-
-}
 class String: public Node{ //NEW
     string value;
     int size;
@@ -86,7 +56,7 @@ public:
         size=value.size();
     }
     string getValue(){return value;}
-    int size(){return size;}
+    int getSize(){return size;}
 
 };
 
@@ -95,9 +65,9 @@ class Exp: public Node{
 public:
     string reg;
     vector<pair<int,BranchLabelIndex>> falseList, trueList; //NEW: added trueList and FalseList for when the exp is BOOL
-    explicit Exp(string type){
+    explicit Exp(string type, string reg){
         this->type = type;
-        this->reg=freshVar();
+        this->reg = reg;
         //falseList.clear();
        // trueList.clear();
     }
@@ -110,43 +80,7 @@ public:
     }
      void addToFalseList(pair<int,BranchLabelIndex> branch);//TODO: complete the implementation
      void addToTrueList(pair<int,BranchLabelIndex> branch);
-     Exp(Exp* exp1, Exp* exp2, string op){  //for relop op. // continue
-        this->type = "BOOL";
-        this->reg=freshVar();
-        falseList.clear();
-        trueList.clear();
-		CodeBuffer& buffer = CodeBuffer::instance();
-		buffer.emit("%"+reg+" = icmp "+op+" i32 %"+exp1->reg+", %"+exp1->reg);
-		int line= buffer.emit("br i1 %"+reg+", label @, label @"); 
-        addToFalseList(pair<int,BranchLabelIndex> (line, SECOND)); 
-        addToTrueList(pair<int,BranchLabelIndex> (line, FIRST)); 
-        
-     }
-     
-    Exp(Exp* exp1, Exp* exp2, string op,bool isBool){  //for binop op. //continue
-      
-        if(op.compare("div")==0){ //div
-			buffer.emit("%"+to_string(curr_reg++)+" = icmp eq i32 0, %"+exp2->reg);
-			int line=buffer.emit("br i1 %"+reg+", label @, label @");
-			buffer.bpatch(buffer.makelist(pair<int,BranchLabelIndex>(line,FIRST)),buffer.genLabel());
-			buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
-			buffer.emit("call void @exit(i32 0)");
-			int end=buffer.emit("br label @");
-			buffer.bpatch(buffer.merge(buffer.makelist(pair<int,BranchLabelIndex>(line,SECOND)),buffer.makelist(pair<int,BranchLabelIndex>(end,FIRST))),buffer.genLabel());
-            
-        }
-        str="%"+freshVar()+" = ";
-        if(op.compare("div")!=0){ //mul. +/ -
-         str+=op;
-        }
-        str+=" i32 %"+exp1->reg+", %"+exp2->reg;
-        buffer.emit(str);
-        if (isByte) //if both are byte
-		{
-            
-		}
-        this->reg = freshVar(); // new reg 
-     }
+
 };
 
 class Num : public Node{
