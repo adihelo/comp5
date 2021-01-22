@@ -341,14 +341,14 @@ Exp:        LPAREN Exp RPAREN//Done
               $$= new Exp("BOOL");
               //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,1");
               int line=Buffer.emit("br label @");
-              dynamic_cast<Exp*>$$->addToTrueList(pair<int,BranchLabelIndex>(line,FIRST));
+              addToTrueList(dynamic_cast<Exp*>$$, pair<int,BranchLabelIndex>(line,FIRST));
 		  }
           | FALSE //DONE
 		  {
               $$= new Exp("BOOL");
               //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,0");
               int line=Buffer.emit("br label @");
-              dynamic_cast<Exp*>$$->addToFalseList(pair<int,BranchLabelIndex>(line,FIRST));
+              addToFalseList(dynamic_cast<Exp*>$$, pair<int,BranchLabelIndex>(line,FIRST));
 		  }
           | NOT Exp
 		  {
