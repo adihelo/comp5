@@ -54,10 +54,10 @@ whitespace		([\r\t\n ])
 "]"                                         return RBRACKET;
 "in"                                        return RELOPN;
 "="                                         return ASSIGN;
-"<"|">"|"<="|">="                           return RELOPL;
-"=="|"!="                                   return RELOPR;
-\+|\-                                       return ADDSUB;
-\*|\/							            return MULDIV;
+"<"|">"|"<="|">="                           {yylval = new Operation(yytext);return RELOPL;} //NEW
+"=="|"!="                                   {yylval = new Operation(yytext);return RELOPR;}  //NEW
+\+|\-                                       {yylval = new Operation(yytext);return ADDSUB;}   //NEW
+\*|\/							            {yylval = new Operation(yytext); return MULDIV;}  //NEW
 \.\.                                        return DOTS;
 {letter}({letter}|{digit})*                 {
 	                                           yylval =  new Identifier(yytext);
@@ -68,7 +68,7 @@ whitespace		([\r\t\n ])
                                                return NUM;
                                             }
 
-\"([^\n\r\"\\]|\\[rnt"\\])+\"               return STRING;
+\"([^\n\r\"\\]|\\[rnt"\\])+\"               {yylval = new String(yytext); return STRING;} //NEW
 {whitespace}                                /* ignore */;
 "//"[^\r\n]*[\r\n|\n|\r]?                  /* ignore */;
 

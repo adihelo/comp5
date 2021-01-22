@@ -64,3 +64,33 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
     define_command += convert_to_llvm_type(argTypes.back()) + ") {";
     buffer.emit(define_command);
 }
+
+
+/*
+   emit function for call
+*/
+void call_emit(string func_type, string func_name, vector<pair<string,int>> var_vec){  //NEW
+        CodeBuffer& buffer = CodeBuffer::instance();
+        string emit_str;
+         if (func_name=="print") { //print like descirbed in pdf.
+            string size=to_string(table.lastStringSize);
+            //TODO: Add like described for exit in hw5 pdf file.
+            Buffer.emit(emit_str); 
+            return;
+        }else{
+            if(func_type=="VOID"){
+                emit_str="call void";
+            }else{
+                emit_str="%"+to_string(currentRegistor)+" = call i32";
+                currentRegistor++;
+            }
+            emit_str+=" @"+func_name+"(";
+            if(!var_vec.empty()){
+                for (int i=0; i<vec.size()-1; i++){
+                    emit_str+="i32 %"+to_string(vec[i].second)+", ";
+                }
+                emit_str+="i32 %"+to_string(vec.back().second)+")";
+            }
+            buffer.emit(emit_str);
+        }
+    }
