@@ -89,39 +89,45 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
 }
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
-
-    buffer.emit("%" + result->reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
-    int line= buffer.emit("br i1 %" + result->reg + ", label @, label @");
-    result->addToFalseList(pair<int,BranchLabelIndex> (line, SECOND));
-    result->addToTrueList(pair<int,BranchLabelIndex> (line, FIRST));
+    string reg=freshVar();
+    buffer.emit("%" + reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
+    int line= buffer.emit("br i1 %" + reg + ", label @, label @");
+    result->addToFalseList({line, SECOND});
+    result->addToTrueList({line, FIRST});
 
 }
 
 void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
+    string op=relop;
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
-        buffer.emit("%"+to_string(curr_reg)+" = icmp eq i32 0, %"+exp2->reg);
-        int line=buffer.emit("br i1 %" + to_string(curr_reg) + ", label @, label @");
-        curr_reg=freshVar();
-        buffer.bpatch(buffer.makelist(pair<int,BranchLabelIndex>(line,FIRST)),buffer.genLabel());
+        string reg=freshVar();
+        buffer.emit(reg+" = icmp eq i32 0, "+exp2->reg);
+        int line=buffer.emit("br i1 %" + reg + ", label @, label @");
+        buffer.bpatch(buffer.makelist({line,FIRST}),buffer.genLabel());
         buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
         int end=buffer.emit("br label @");
-        buffer.bpatch(buffer.merge(buffer.makelist(pair<int,BranchLabelIndex>(line,SECOND)),buffer.makelist(pair<int,BranchLabelIndex>(end,FIRST))),buffer.genLabel());
-
+        buffer.bpatch(buffer.merge(buffer.makelist({line,SECOND}),buffer.makelist({end,FIRST})),buffer.genLabel());
+        if(isByte)  op="udiv";
+        
     }
-    buffer.emit("%"+to_string(curr_reg)+" = "+relop+" i32 %"+exp1->reg+", %"+exp2->reg);
+    
+    buffer.emit(to_string(curr_reg)+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
     if (isByte) //on exp is byte
     {
         //truncating and zext ( HW page 4)
-        prev_reg=curr_reg;
-        new_reg=freshVar();
-		buffer.emit("%"+new_reg+"=inttoptr i32 %"+to_string( prev_reg)+" to i8*");
+        string prev_reg=reg;
+        string new_reg=freshVar();
+		//buffer.emit("%"+new_reg+"=inttoptr i32 %"+to_string( prev_reg)+" to i8*");
+		//prev_reg=new_reg;
+        //new_reg=freshVar();
+		//buffer.emit("%"+new_reg+"=ptrtoint i8* %"+to_string(prev_reg)+" to i8");
+        
+         buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8*");
+
 		prev_reg=new_reg;
         new_reg=freshVar();
-		buffer.emit("%"+new_reg+"=ptrtoint i8* %"+to_string(prev_reg)+" to i8");
-		prev_reg=new_reg;
-        new_reg=freshVar();
-		buffer.emit("%"+new_reg+"=zext i8 %"+to_string(prev_reg)+" to i32");
+		buffer.emit(new_reg+"=zext i8 "+prev_reg+" to i32");
 
     }
     
@@ -140,15 +146,15 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
             if(func_type=="VOID"){
                 emit_str="call void";
             }else{
-                emit_str="%"+to_string(curr_reg)+" = call i32";
+                emit_str=to_string(curr_reg)+" = call i32";
                 curr_reg=freshVar();
             }
             emit_str+=" @"+func_name+"(";
             if(!var_vec.empty()){
                 for (int i=0; i<var_vec.size()-1; i++){
-                    emit_str+="i32 %"+to_string(var_vec[i].second)+", ";
+                    emit_str+="i32 "+to_string(var_vec[i].second)+", ";
                 }
-                emit_str+="i32 %"+to_string(var_vec.back().second)+")";
+                emit_str+="i32 "+to_string(var_vec.back().second)+")";
             }
             buffer.emit(emit_str);
         }

@@ -245,7 +245,7 @@ Call:      ID LPAREN Explist RPAREN
               string name = $1->name;
               string func_type = funcs_table->checkArgsValid($1->name,curr_explist);
               vars_table.call_emit(type, name, curr_explist); 
-              $$=new Call(func_type,vars_table.register_num);
+              $$=new Call(func_type,freshVar());
 			  curr_explist.clear();
 		  }
           | ID LPAREN RPAREN
@@ -253,18 +253,18 @@ Call:      ID LPAREN Explist RPAREN
               string name = $1->name;
               string func_type = funcs_table->checkArgsValid($1->name,curr_explist);
               vars_table.call_emit(type, name, {}); 
-              $$=new Call(func_type,vars_table.register_num);
+              $$=new Call(func_type,freshVar());
 			  curr_explist.clear();
 		  }
 
 Explist:    Exp
           {
-	         curr_explist.push_back(($1->type, $1->reg)); 
+	         curr_explist.push_back({$1->type, $1->reg}); 
           
 		  }
           | Exp COMMA Explist
 		  {
-            curr_explist.push_back(($1->type, $1->reg));
+            curr_explist.push_back({$1->type, $1->reg});
 		  }
 
 Type :      INT
@@ -281,12 +281,12 @@ Type :      INT
 		  }
           | SET LBRACKET NUM DOTS NUM RBRACKET
 		  {
-			 if((dynamic_cast<Num*>$3)->getVal() <0 || (((dynamic_cast<Num*>$5)->getVal() - (dynamic_cast<Num*>$3)->getVal()) > 255) 
-                || ((dynamic_cast<Num*>$3)->getVal() >= (dynamic_cast<Num*>$5)->getVal())){
+			 if(stoi((dynamic_cast<Num*>$3)->getVal()) < 0 || ((stoi((dynamic_cast<Num*>$5)->getVal()) - stoi((dynamic_cast<Num*>$3)->getVal())) > 255) 
+                || (stoi((dynamic_cast<Num*>$3)->getVal()) >= stoi((dynamic_cast<Num*>$5)->getVal()))){
                     output::errorSetTooLarge(yylineno,$3->name, $5->name);
                     exit(0);
 			 }
-			 $$ = new Type("SET");
+			 $$ = new Type("SET",stoi((dynamic_cast<Num*>$3)->getVal()),stoi((dynamic_cast<Num*>$5)->getVal()));
 		  }
 
 Exp:        LPAREN Exp RPAREN//Done
@@ -317,8 +317,9 @@ Exp:        LPAREN Exp RPAREN//Done
           | NUM//DONE
 		  {
                 $$= new Exp("INT");
-                Buffer.emit("%"+ to_string(curr_reg)+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
-                dynamic_cast<Exp*>$$->reg=freshVar();
+                 dynamic_cast<Exp*>$$->reg=freshVar();
+                Buffer.emit(dynamic_cast<Exp*>$$->reg+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
+               
 		  }
           | NUM B //DONE
 		  {
@@ -329,8 +330,9 @@ Exp:        LPAREN Exp RPAREN//Done
                     output::errorByteTooLarge(yylineno, value);
                     exit(0);
                 }
-               Buffer.emit("%"+ to_string(curr_reg)+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
-                dynamic_cast<Exp*>$$->reg=freshVar();
+                dynamic_cast<Exp*>$1->reg = freshVar();
+               Buffer.emit( dynamic_cast<Exp*>$1->reg+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
+               
 		  }
           | STRING //DONE
 		  {
@@ -338,8 +340,8 @@ Exp:        LPAREN Exp RPAREN//Done
                 string str=(dynamic_cast<String*>$1)->getValue(); 
                 str+='\00';
                 int str_size = (dynamic_cast<String*>$1)->size(); 
-                string str="@string"+to_string(curr_reg)+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\""; 
-                Buffer.emitGlobal(str); 
+                dynamic_cast<Exp>$1->reg=freshVar();
+                Buffer.emitGlobal("@string"+dynamic_cast<Exp>$1->reg+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\""); 
               
 		  }
           | TRUE //DONE
@@ -347,14 +349,14 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,1");
                 int line=Buffer.emit("br label @");
-                addToTrueList(dynamic_cast<Exp*>$$, pair<int,BranchLabelIndex>(line,FIRST));
+                addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
 		  }
           | FALSE //DONE
 		  {
               $$= new Exp("BOOL");
               //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,0");
               int line=Buffer.emit("br label @");
-              addToFalseList(dynamic_cast<Exp*>$$, pair<int,BranchLabelIndex>(line,FIRST));
+              addToFalseList(dynamic_cast<Exp*>$$, {line,FIRST});
 		  }
           | NOT Exp
 		  {
@@ -383,6 +385,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
        
                 $$ = new Exp("BOOL");
+                dynamic_cast<Exp*>$$=freshVar();
                 dynamic_cast<Exp*>$$->falseList=Buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falselist);//falseList of $$ is both falselists of $1 and $4
                 dynamic_cast<Exp*>$$->trueList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
 
@@ -399,10 +402,11 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                     }
                     $$ = new Exp("BOOL");
+                     dynamic_cast<Exp*>$$=freshVar();
                     dynamic_cast<Exp*>$$->trueList=Buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falselist);//falseList of $$ is both falselists of $1 and $4
                     dynamic_cast<Exp*>$$->falseList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
 		  }
-          | Exp ADDSUB Exp       //
+          | Exp ADDSUB Exp       //todo add the set related cases
 		  {
            
                 if((($1->type != "INT") &&($1->type != "BYTE") &&($1->type != "SET"))  || (($3->type != "INT") &&($3->type != "BYTE") &&($3->type != "SET"))){
@@ -455,7 +459,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
                 $$= new Exp("BOOL");
 		  }
-          | LPAREN Type RPAREN Exp 
+          | LPAREN Type RPAREN Exp //todo the casting from set to int-> casting from set to int gives the size of the set.
 		  {
           
                 if(($2->type!="INT") ||($4->type != "SET")){
@@ -476,6 +480,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
+                 dynamic_cast<Exp*>$$=freshVar();
             
 
 		  }| Exp RELOPR Exp //
@@ -487,6 +492,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
+                 dynamic_cast<Exp*>$$=freshVar();
 		  }
 		  
 %%

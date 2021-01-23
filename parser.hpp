@@ -38,9 +38,18 @@ public:
 };
 
 class Type: public Node{
+    
 public:
+//for set type
+ int first_indx=-1,last_indx=-1;
     explicit Type(string new_type) {
         type = new_type;
+    }
+    Type(string type, int start_indx,int end_indx){
+       this->type=type;
+       first_indx=start_indx;
+       last_indx=end_indx;
+    
     }
 
 };
@@ -98,7 +107,7 @@ class Call: public Node{
     
 public:
     string reg;
-    explicit Call(string value,int reg){
+    explicit Call(string value,string reg){
         type = value;
         this->reg=reg;
     }
