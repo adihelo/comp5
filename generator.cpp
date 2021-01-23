@@ -151,3 +151,15 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
             buffer.emit(emit_str);
         }
     }
+    
+void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
+    exp->falseList=CodeBuffer::merge(exp->falseList,CodeBuffer::makelist(branch));
+
+
+}
+void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch){
+    exp->trueList=CodeBuffer::merge(exp->trueList,CodeBuffer::makelist(branch));
+
+}
+
+

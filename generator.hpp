@@ -15,7 +15,7 @@ void emitComman(const string& command);
 void zext(string& reg_to_zext, const string& type);
 void FuncDeclAllocation(int argsNum);
 void storeFuncArg(const string& type, int offset, int argsNumber);
-void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch);//TODO: complete the implementation
+void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch);//DONE
 void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch);
 
 

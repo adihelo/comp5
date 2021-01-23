@@ -65,9 +65,9 @@ class Exp: public Node{
 public:
     string reg;
     vector<pair<int,BranchLabelIndex>> falseList, trueList; //NEW: added trueList and FalseList for when the exp is BOOL
-    explicit Exp(string type, string reg){
+    explicit Exp(string type){
         this->type = type;
-        this->reg = reg;
+        //this->reg = reg;
         //falseList.clear();
        // trueList.clear();
     }
@@ -78,9 +78,6 @@ public:
       this->falseList=exp->falseList;
       this->trueList=exp->trueList;
     }
-     void addToFalseList(pair<int,BranchLabelIndex> branch);//TODO: complete the implementation
-     void addToTrueList(pair<int,BranchLabelIndex> branch);
-
 };
 
 class Num : public Node{

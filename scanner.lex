@@ -54,10 +54,10 @@ whitespace		([\r\t\n ])
 "]"                                         return RBRACKET;
 "in"                                        return RELOPN;
 "="                                         return ASSIGN;
-"<"|">"|"<="|">="                           {yylval = new Operation(yytext);return RELOPL;} //NEW
-"=="|"!="                                   {yylval = new Operation(yytext);return RELOPR;}  //NEW
-\+|\-                                       {yylval = new Operation(yytext);return ADDSUB;}   //NEW
-\*|\/							            {yylval = new Operation(yytext); return MULDIV;}  //NEW
+"<"|">"|"<="|">="                           {yylval = new Identifier(yytext);return RELOPL;} //CHANGED TO IDENTIFIEER BECAUSE YOU DELETED OPERATION CLASS
+"=="|"!="                                   {yylval = new Identifier(yytext);return RELOPR;}  //NEW
+\+|\-                                       {yylval = new Identifier(yytext);return ADDSUB;}   //NEW
+\*|\/							            {yylval = new Identifier(yytext); return MULDIV;}  //NEW
 \.\.                                        return DOTS;
 {letter}({letter}|{digit})*                 {
 	                                           yylval =  new Identifier(yytext);
