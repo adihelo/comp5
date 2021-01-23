@@ -101,7 +101,7 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
         buffer.emit("%"+to_string(curr_reg)+" = icmp eq i32 0, %"+exp2->reg);
         int line=buffer.emit("br i1 %" + to_string(curr_reg) + ", label @, label @");
-        curr_reg+=1;
+        curr_reg=freshVar();
         buffer.bpatch(buffer.makelist(pair<int,BranchLabelIndex>(line,FIRST)),buffer.genLabel());
         buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
@@ -113,12 +113,15 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
     if (isByte) //on exp is byte
     {
         //truncating and zext ( HW page 4)
-        curr_reg+=1;
-		buffer.emit("%"+to_string(curr_reg)+"=inttoptr i32 %"+to_string(curr_reg-1)+" to i8*");
-		curr_reg+=1;
-		buffer.emit("%"+to_string(curr_reg)+"=ptrtoint i8* %"+to_string(curr_reg-1)+" to i8");
-		curr_reg+=1;
-		buffer.emit("%"+to_string(curr_reg)+"=zext i8 %"+to_string(curr_reg-1)+" to i32");
+        prev_reg=curr_reg;
+        new_reg=freshVar();
+		buffer.emit("%"+new_reg+"=inttoptr i32 %"+to_string( prev_reg)+" to i8*");
+		prev_reg=new_reg;
+        new_reg=freshVar();
+		buffer.emit("%"+new_reg+"=ptrtoint i8* %"+to_string(prev_reg)+" to i8");
+		prev_reg=new_reg;
+        new_reg=freshVar();
+		buffer.emit("%"+new_reg+"=zext i8 %"+to_string(prev_reg)+" to i32");
 
     }
     
@@ -138,7 +141,7 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
                 emit_str="call void";
             }else{
                 emit_str="%"+to_string(curr_reg)+" = call i32";
-                curr_reg++;
+                curr_reg=freshVar();
             }
             emit_str+=" @"+func_name+"(";
             if(!var_vec.empty()){
