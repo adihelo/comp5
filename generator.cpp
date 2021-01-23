@@ -90,10 +90,6 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 
-    result->type = "BOOL";
-    result->reg=freshVar();
-    result->falseList.clear();
-    result->trueList.clear();
     buffer.emit("%" + result->reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
     int line= buffer.emit("br i1 %" + result->reg + ", label @, label @");
     result->addToFalseList(pair<int,BranchLabelIndex> (line, SECOND));
@@ -102,9 +98,10 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 }
 
 void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
-    if(relop == "div"){ //div
-        buffer.emit("%"+to_string(curr_reg++)+" = icmp eq i32 0, %"+exp2->reg);
-        int line=buffer.emit("br i1 %" + result->reg + ", label @, label @");
+    if(relop == "sdiv"){ //div check whether exp2 is zero or not.
+        buffer.emit("%"+to_string(curr_reg)+" = icmp eq i32 0, %"+exp2->reg);
+        int line=buffer.emit("br i1 %" + to_string(curr_reg) + ", label @, label @");
+        curr_reg+=1;
         buffer.bpatch(buffer.makelist(pair<int,BranchLabelIndex>(line,FIRST)),buffer.genLabel());
         buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
@@ -112,17 +109,19 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
         buffer.bpatch(buffer.merge(buffer.makelist(pair<int,BranchLabelIndex>(line,SECOND)),buffer.makelist(pair<int,BranchLabelIndex>(end,FIRST))),buffer.genLabel());
 
     }
-    string str="%"+freshVar()+" = ";
-    if(relop != "div"){ //mul. +/ -
-        str += relop;
-    }
-    str+=" i32 %"+exp1->reg+", %"+exp2->reg;
-    buffer.emit(str);
-    if (isByte) //if both are byte
+    buffer.emit("%"+to_string(curr_reg)+" = "+relop+" i32 %"+exp1->reg+", %"+exp2->reg);
+    if (isByte) //on exp is byte
     {
+        //truncating and zext ( HW page 4)
+        curr_reg+=1;
+		buffer.emit("%"+to_string(curr_reg)+"=inttoptr i32 %"+to_string(curr_reg-1)+" to i8*");
+		curr_reg+=1;
+		buffer.emit("%"+to_string(curr_reg)+"=ptrtoint i8* %"+to_string(curr_reg-1)+" to i8");
+		curr_reg+=1;
+		buffer.emit("%"+to_string(curr_reg)+"=zext i8 %"+to_string(curr_reg-1)+" to i32");
 
     }
-    result->reg = freshVar(); // new reg
+    
 }
 /*
    emit function for call
@@ -130,7 +129,7 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
 void call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
         string emit_str;
          if (func_name=="print") { //print like descirbed in pdf.
-            string size=to_string(table.lastStringSize);
+           // string size=to_string(table.lastStringSize);
             //TODO: Add like described for exit in hw5 pdf file.
             buffer.emit(emit_str);
             return;

@@ -282,9 +282,9 @@ Type :      INT
           | SET LBRACKET NUM DOTS NUM RBRACKET
 		  {
 			 if((dynamic_cast<Num*>$3)->getVal() <0 || (((dynamic_cast<Num*>$5)->getVal() - (dynamic_cast<Num*>$3)->getVal()) > 255) 
-             || ((dynamic_cast<Num*>$3)->getVal() >= (dynamic_cast<Num*>$5)->getVal())){
-			 output::errorSetTooLarge(yylineno,$3->name, $5->name);
-             exit(0);
+                || ((dynamic_cast<Num*>$3)->getVal() >= (dynamic_cast<Num*>$5)->getVal())){
+                    output::errorSetTooLarge(yylineno,$3->name, $5->name);
+                    exit(0);
 			 }
 			 $$ = new Type("SET");
 		  }
@@ -414,7 +414,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     $$= new Exp("SET");
                 }
                 else if(($1->type == "INT") ||($3->type == "INT")){
-                    $$= new Exp("INT", freshVar());
+                    $$= new Exp("INT");
                 }else if($1->type == "BYTE" || $3->type == "BYTE"){
                     $$ = new Exp("BYTE");
                     byteFlag=true;
@@ -453,7 +453,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     output::errorMismatch(yylineno);
                     exit(0);
                 }
-                $$= new Exp("BOOL", freshVar());
+                $$= new Exp("BOOL");
 		  }
           | LPAREN Type RPAREN Exp 
 		  {
@@ -474,7 +474,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
             
                 $$= new Exp("BOOL");
-                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
+                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
             
 
