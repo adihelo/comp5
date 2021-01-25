@@ -159,11 +159,15 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
            }
         
     }
- void emit_id(string name,string type)
+ string emit_id(string offset)
 	{
 		CodeBuffer& buffer = CodeBuffer::instance();
-		string str;
-		
+        string reg1=freshVar();
+        buffer.emit(reg1+ " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + offset);
+        string reg2=freshVar();
+        buffer.emit(reg2+" = load i32, i32* "+reg1;);
+        return reg2;
+					
 	}  
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
     exp->falseList=CodeBuffer::merge(exp->falseList,CodeBuffer::makelist(branch));

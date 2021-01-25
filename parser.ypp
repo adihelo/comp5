@@ -293,21 +293,21 @@ Exp:        LPAREN Exp RPAREN//Done
           {
 			 $$= new Exp((dynamic_cast<Exp*>$2));;
 		  }
-          | ID//TODO
+          | ID
 		  {
-                string type = vars_table->checkVariableDeclared($1->name);
+                string type = vars_table->checkVariableDeclared( dynamic_cast<Identifier*>$1->name);
                 if(type == ""){
                     output::errorUndef(yylineno, $1->name);
                     exit(0);
                 }
                 //emit id from table
                 
-                
-                
+                  string exp_reg=emit_id(vars_table->varGetOffset(dynamic_cast<Identifier*>$1->name));
                 
                 $$= new Exp(type);
-                dynamic_cast<Exp*>$$->reg=freshVar();
+                dynamic_cast<Exp*>$$->reg=exp_reg;
                 //if the type is bool, add to falselist/truelist of $$
+             
                  if (type=="BOOL") {
                  
                     string reg1=freshVar();
