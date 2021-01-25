@@ -99,7 +99,7 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 
 }
 
-void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
+string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
     CodeBuffer& buffer = CodeBuffer::instance();
     string op=relop;
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
@@ -114,8 +114,8 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
         if(isByte)  op="udiv";
         
     }
-    
-    buffer.emit(to_string(curr_reg)+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
+    reg=freshVar();
+    buffer.emit(reg+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
     if (isByte) //on exp is byte
     {
         //trunc and zext ( HW page 4)
@@ -127,7 +127,8 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
 		buffer.emit(new_reg+"=zext i8 "+prev_reg+" to i32");
 
     }
-    
+    if(isByte) return new_reg;
+    return reg;
 }
 /*
    emit function for call

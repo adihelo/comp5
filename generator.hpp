@@ -24,7 +24,7 @@ void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch);
 /******************** LLVM functions ********************/
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes);
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop);
-void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte);
+string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte);
 
 
 

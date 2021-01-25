@@ -242,16 +242,16 @@ ExpBool: Exp{
 
 Call:      ID LPAREN Explist RPAREN
           {
-              string name = $1->name;
-              string func_type = funcs_table->checkArgsValid($1->name,curr_explist);
+              string name =  dynamic_cast<Identifier*>$1->name;
+              string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
               vars_table.call_emit(type, name, curr_explist); 
               $$=new Call(func_type,freshVar());
 			  curr_explist.clear();
 		  }
           | ID LPAREN RPAREN
 		  {
-              string name = $1->name;
-              string func_type = funcs_table->checkArgsValid($1->name,curr_explist);
+              string name =  dynamic_cast<Identifier*>$1->name;
+              string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
               vars_table.call_emit(type, name, {}); 
               $$=new Call(func_type,freshVar());
 			  curr_explist.clear();
@@ -356,7 +356,7 @@ Exp:        LPAREN Exp RPAREN//Done
                Buffer.emit( dynamic_cast<Exp*>$1->reg+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
                
 		  }
-          | STRING //DONE
+          | STRING //TOCONTINUE
 		  {
                 $$= new Exp("STRING");
                 string str=(dynamic_cast<String*>$1)->getValue(); 
@@ -389,7 +389,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     $$= new Exp("BOOL");
                     (dynamic_cast<Exp*>$$)->falseList = (dynamic_cast<Exp*>$2)->trueList;  //maybe change this to something better
                     (dynamic_cast<Exp*>$$)->trueList = (dynamic_cast<Exp*>$2)->falseList;
-                    (dynamic_cast<Exp*>$$)->reg = (dynamic_cast<Exp*>$2)->reg;  //is this right?
+                   // (dynamic_cast<Exp*>$$)->reg = (dynamic_cast<Exp*>$2)->reg;  //is this right?
                 }
 			  
 		  }
@@ -445,15 +445,16 @@ Exp:        LPAREN Exp RPAREN//Done
                     $$ = new Exp("BYTE");
                     byteFlag=true;
                 }
-                else{
+                /*else{
                  
                     $$= new Exp("BOOL"); //check this again!!
-                }
-                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
+                }*/
+                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 //$$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
 
-                llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
-                dynamic_cast<Exp*>$$->reg = freshVar();
+                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
+                string exp_reg=llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
+                dynamic_cast<Exp*>$$->reg =exp_reg;
 		  }
           | Exp MULDIV Exp       //todo: need to add SET to binop
 		  {
@@ -469,9 +470,9 @@ Exp:        LPAREN Exp RPAREN//Done
                         $$= new Exp("BYTE");
                         byteFlag=true;
                 }
-                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
-                llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
-                 dynamic_cast<Exp*>$$->reg = freshVar();
+                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
+                string exp_reg=llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
+                 dynamic_cast<Exp*>$$->reg = exp_reg;
 		  }
 		  | Exp RELOPN Exp  //todo
 		  {
@@ -502,7 +503,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
-                 dynamic_cast<Exp*>$$=freshVar();
+                // dynamic_cast<Exp*>$$=freshVar();
             
 
 		  }| Exp RELOPR Exp //
@@ -514,7 +515,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
-                 dynamic_cast<Exp*>$$=freshVar();
+               //  dynamic_cast<Exp*>$$=freshVar();
 		  }
 		  
 %%
