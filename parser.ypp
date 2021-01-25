@@ -315,8 +315,8 @@ Exp:        LPAREN Exp RPAREN//Done
                     string reg2=freshVar();
                     Buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
                     string line = Buffer.emit("br i1 "+reg2+", label @, label @")
-                    dynamic_cast<Exp*>$$->addToFalseList({line,SECOND});
-                    dynamic_cast<Exp*>$$->addToTrueList({line,FIRST});
+                    addToFalseList(dynamic_cast<Exp*>$$,{line,SECOND});
+                    addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
                 }
 		  }
           | Call //DONE
@@ -331,8 +331,8 @@ Exp:        LPAREN Exp RPAREN//Done
                     string reg2=freshVar();
                     Buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
                     string line = Buffer.emit("br i1 "+reg2+", label @, label @")
-                    dynamic_cast<Exp*>$$->addToFalseList({line,SECOND});
-                    dynamic_cast<Exp*>$$->addToTrueList({line,FIRST});
+                    addToFalseList(dynamic_cast<Exp*>$$,{line,SECOND});
+                    addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
                 }
            
 		  }
