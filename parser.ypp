@@ -12,7 +12,7 @@
     symbolsTable* vars_table = new symbolsTable();         // The symbols table for variables.
     FuncsTable* funcs_table = new FuncsTable();          // The table for all functions declared.
     vector<string> curr_func_args;   //saves the args of the function currently being declared.
-    vector<string> curr_explist;     //saves the args given to the currently called function.
+    vector<pair<string,string>> curr_explist;     //saves the args given to the currently called function.//pair <type,reg >
     bool while_mode = false;
 
 	
@@ -301,16 +301,35 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                 }
                 //emit id from table
-                $$= new Exp(type, freshVar());
+                
+                $$= new Exp(type);
+                dynamic_cast<Exp*>$$->reg=freshVar();
                 //if the type is bool, add to falselist/truelist of $$
+                 if (type=="BOOL") {
+                 
+                    string reg1=freshVar();
+                    Buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
+                    string reg2=freshVar();
+                    Buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
+                    string line = Buffer.emit("br i1 "+reg2+", label @, label @")
+                    dynamic_cast<Exp*>$$->addToFalseList({line,SECOND});
+                    dynamic_cast<Exp*>$$->addToTrueList({line,FIRST});
+                }
 		  }
-          | Call //CONTINUE
+          | Call //DONE
 		  {
                 dynamic_cast<Exp*>$$= new Exp($1->type);
                 dynamic_cast<Exp*>$$->name= $1->name;
                 dynamic_cast<Exp*>$$->reg= dynamic_cast<Call*>$1->reg;
                 if (dynamic_cast<Call*>$1->type=="BOOL") {
-                    //if the type is bool, add to falselist/truelist of $$
+                 
+                    string reg1=freshVar();
+                    Buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
+                    string reg2=freshVar();
+                    Buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
+                    string line = Buffer.emit("br i1 "+reg2+", label @, label @")
+                    dynamic_cast<Exp*>$$->addToFalseList({line,SECOND});
+                    dynamic_cast<Exp*>$$->addToTrueList({line,FIRST});
                 }
            
 		  }
@@ -340,8 +359,8 @@ Exp:        LPAREN Exp RPAREN//Done
                 string str=(dynamic_cast<String*>$1)->getValue(); 
                 str+='\00';
                 int str_size = (dynamic_cast<String*>$1)->size(); 
-                dynamic_cast<Exp>$1->reg=freshVar();
-                Buffer.emitGlobal("@string"+dynamic_cast<Exp>$1->reg+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\""); 
+                //dynamic_cast<Exp>$$->reg=freshVar();
+                Buffer.emitGlobal("@string"+to_string(curr_reg)+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\""); 
               
 		  }
           | TRUE //DONE

@@ -123,7 +123,7 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
         //new_reg=freshVar();
 		//buffer.emit("%"+new_reg+"=ptrtoint i8* %"+to_string(prev_reg)+" to i8");
         
-         buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8*");
+         buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8");
 
 		prev_reg=new_reg;
         new_reg=freshVar();
@@ -137,27 +137,27 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
 */
 void call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
         string emit_str;
-         if (func_name=="print") { //print like descirbed in pdf.
-           // string size=to_string(table.lastStringSize);
-            //TODO: Add like described for exit in hw5 pdf file.
-            buffer.emit(emit_str);
-            return;
-        }else{
-            if(func_type=="VOID"){
-                emit_str="call void";
-            }else{
-                emit_str=to_string(curr_reg)+" = call i32";
-                curr_reg=freshVar();
-            }
-            emit_str+=" @"+func_name+"(";
-            if(!var_vec.empty()){
-                for (int i=0; i<var_vec.size()-1; i++){
-                    emit_str+="i32 "+to_string(var_vec[i].second)+", ";
+           if(func_name=="print"){
+               
+               
+           }else{
+                if(func_type=="VOID"){
+                    emit_str="call void";
+                }else{
+                    int new_reg = freshVar();
+                    emit_str=new_reg+" = call i32";
+               
                 }
-                emit_str+="i32 "+to_string(var_vec.back().second)+")";
-            }
-            buffer.emit(emit_str);
-        }
+                emit_str+=" @"+func_name+"(";
+                if(!var_vec.empty()){
+                    for (int i=0; i<var_vec.size(); i++){
+                        emit_str+="i32 "+to_string(var_vec[i].second);                 
+                        if(i<var_vec.size()-1) emit_str+=" ,";   
+                    }
+                }
+                buffer.emit(emit_str);
+           }
+        
     }
     
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
