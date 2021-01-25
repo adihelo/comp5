@@ -90,7 +90,6 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
 }
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
-    CodeBuffer& buffer = CodeBuffer::instance();
     string reg=freshVar();
     buffer.emit("%" + reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
     int line= buffer.emit("br i1 %" + reg + ", label @, label @");
@@ -100,7 +99,6 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 }
 
 string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
-    CodeBuffer& buffer = CodeBuffer::instance();
     string op=relop;
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
         string reg=freshVar();
@@ -133,20 +131,18 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
 /*
    emit function for call
 */
-void call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
+string call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
         string emit_str;
-        CodeBuffer& buffer = CodeBuffer::instance();
+        int call_res_reg;
            if(func_name=="print"){
-                string size=to_string(table.lastStringSize);
-                string str="call void @print(i8* getelementptr (["+size+" x i8], ["+size+" x i8]* @string"+to_string(table.currentString-1)+", i64 0, i64 0))";
-                Buffer.emit(str); 
+                
                
            }else{
                 if(func_type=="VOID"){
                     emit_str="call void";
                 }else{
-                    int new_reg = freshVar();
-                    emit_str=new_reg+" = call i32";
+                    call_res_reg = freshVar();
+                    emit_str=call_res_reg+" = call i32";
                
                 }
                 emit_str+=" @"+func_name+"(";
@@ -158,13 +154,12 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
                 }
                 buffer.emit(emit_str);
            }
-        
+        return call_res_reg;
     }
- string emit_id(string offset)
+string emit_id(int offset)
 	{
-		CodeBuffer& buffer = CodeBuffer::instance();
         string reg1=freshVar();
-        buffer.emit(reg1+ " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + offset);
+        buffer.emit(reg1+ " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
         string reg2=freshVar();
         buffer.emit(reg2+" = load i32, i32* "+reg1;);
         return reg2;

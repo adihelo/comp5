@@ -18,8 +18,8 @@ void storeFuncArg(const string& type, int offset, int argsNumber);
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch);//done
 void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch);
 
-
-
+string call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec);
+string emit_id(int offset);
 
 /******************** LLVM functions ********************/
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes);

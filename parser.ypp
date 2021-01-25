@@ -244,16 +244,16 @@ Call:      ID LPAREN Explist RPAREN
           {
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
-              vars_table.call_emit(type, name, curr_explist); 
-              $$=new Call(func_type,freshVar());
+              string res_reg=vars_table.call_emit(type, name, curr_explist); 
+              $$=new Call(func_type,res_reg);
 			  curr_explist.clear();
 		  }
           | ID LPAREN RPAREN
 		  {
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
-              vars_table.call_emit(type, name, {}); 
-              $$=new Call(func_type,freshVar());
+              string res_reg=vars_table.call_emit(type, name, {}); 
+              $$=new Call(func_type,res_reg);
 			  curr_explist.clear();
 		  }
 
