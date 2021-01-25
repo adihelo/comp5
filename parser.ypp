@@ -302,6 +302,9 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
                 //emit id from table
                 
+                
+                
+                
                 $$= new Exp(type);
                 dynamic_cast<Exp*>$$->reg=freshVar();
                 //if the type is bool, add to falselist/truelist of $$

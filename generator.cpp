@@ -79,6 +79,7 @@ void storeFuncArg(const string& type, const string& offset, int argsNumber){
 }
 
 void llvmFuncDecl(const string& retType, const string& funcName, vector<string>& argTypes){
+    CodeBuffer& buffer = CodeBuffer::instance();
 
     string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
     for (int i = 0; i < argTypes.size()-1 ; ++i) {
@@ -89,6 +90,7 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
 }
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
+    CodeBuffer& buffer = CodeBuffer::instance();
     string reg=freshVar();
     buffer.emit("%" + reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
     int line= buffer.emit("br i1 %" + reg + ", label @, label @");
@@ -98,6 +100,7 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 }
 
 void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
+    CodeBuffer& buffer = CodeBuffer::instance();
     string op=relop;
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
         string reg=freshVar();
@@ -115,16 +118,10 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
     buffer.emit(to_string(curr_reg)+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
     if (isByte) //on exp is byte
     {
-        //truncating and zext ( HW page 4)
+        //trunc and zext ( HW page 4)
         string prev_reg=reg;
         string new_reg=freshVar();
-		//buffer.emit("%"+new_reg+"=inttoptr i32 %"+to_string( prev_reg)+" to i8*");
-		//prev_reg=new_reg;
-        //new_reg=freshVar();
-		//buffer.emit("%"+new_reg+"=ptrtoint i8* %"+to_string(prev_reg)+" to i8");
-        
-         buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8");
-
+        buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8");
 		prev_reg=new_reg;
         new_reg=freshVar();
 		buffer.emit(new_reg+"=zext i8 "+prev_reg+" to i32");
@@ -137,8 +134,11 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
 */
 void call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
         string emit_str;
+        CodeBuffer& buffer = CodeBuffer::instance();
            if(func_name=="print"){
-               
+                string size=to_string(table.lastStringSize);
+                string str="call void @print(i8* getelementptr (["+size+" x i8], ["+size+" x i8]* @string"+to_string(table.currentString-1)+", i64 0, i64 0))";
+                Buffer.emit(str); 
                
            }else{
                 if(func_type=="VOID"){
@@ -159,7 +159,12 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
            }
         
     }
-    
+ void emit_id(string name,string type)
+	{
+		CodeBuffer& buffer = CodeBuffer::instance();
+		string str;
+		
+	}  
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
     exp->falseList=CodeBuffer::merge(exp->falseList,CodeBuffer::makelist(branch));
 
