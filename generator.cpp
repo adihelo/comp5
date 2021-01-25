@@ -135,7 +135,9 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
         string emit_str;
         int call_res_reg;
            if(func_name=="print"){
-                
+               int reg=lastStringReg-1;
+               int size=lastStringSize;
+                Buffer.emit("call void @print(i8* getelementptr (["+to_string(size)+" x i8], ["+to_string(size)+" x i8]* @string"+to_string(reg)+", i64 0, i64 0))";); 
                
            }else{
                 if(func_type=="VOID"){
@@ -148,7 +150,7 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                 emit_str+=" @"+func_name+"(";
                 if(!var_vec.empty()){
                     for (int i=0; i<var_vec.size(); i++){
-                        emit_str+="i32 "+to_string(var_vec[i].second);                 
+                        emit_str+="i32 "+var_vec[i].second;                 
                         if(i<var_vec.size()-1) emit_str+=" ,";   
                     }
                 }

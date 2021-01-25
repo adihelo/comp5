@@ -6,7 +6,8 @@
 #include "parser.hpp"
 #define buffer CodeBuffer::instance()
 
-
+int lastStringSize=0;
+int lastStringReg=0;
 /********************* helper functions ******************/
 
 string freshVar();
