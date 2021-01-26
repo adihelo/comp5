@@ -2,7 +2,7 @@
 	#include <iostream>
 	#include <stdlib.h>
 	#include "hw3_output.hpp"
-	#include "parser.hpp"
+	//#include "parser.hpp"
 	#include "generator.hpp"
 	using namespace std;
 	extern int yylex();

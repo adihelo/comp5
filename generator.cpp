@@ -1,6 +1,6 @@
 #include "generator.hpp"
 #include "hw3_output.hpp"
-#include "parser.hpp"
+//#include "parser.hpp"
 #include "bp.hpp"
 #include <string>
 #include <sstream>
@@ -211,7 +211,7 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
            if(func_name=="print"){
                int reg=lastStringReg-1;
                int size=lastStringSize;
-                Buffer.emit("call void @print(i8* getelementptr (["+to_string(size)+" x i8], ["+to_string(size)+" x i8]* @string"+to_string(reg)+", i64 0, i64 0))";); 
+                buffer.emit("call void @print(i8* getelementptr (["+to_string(size)+" x i8], ["+to_string(size)+" x i8]* @string"+to_string(reg)+", i64 0, i64 0))";); 
                
            }else{
                 if(func_type=="VOID"){
