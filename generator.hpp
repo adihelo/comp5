@@ -12,7 +12,7 @@ int lastStringReg=0;
 
 string freshVar();
 string convert_to_llvm_type(const string& type);
-void emitComman(const string& command);
+void emitCommand(const string& command);
 void zext(string& reg_to_zext, const string& type);
 void FuncDeclAllocation(int argsNum);
 void storeFuncArg(const string& type, int offset, int argsNumber);
@@ -31,6 +31,7 @@ void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label);
 void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_fals&e);
 void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string break_label, string inst_label);
 string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte);
+string llvmOpCommand(const string& operation);
 
 
 

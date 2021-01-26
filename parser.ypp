@@ -235,7 +235,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  {
 		      $$ = new Statement();
 		      vars_table->closeScope();
-		      llvmIfStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6, M.label);
+		      llvmIfStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6, M->label);
 		  }
 		  | IF LPAREN ExpBool RPAREN M Statement N ELSE {  vars_table->closeScope(); vars_table->openScope();}  M Statement
 		  {
@@ -248,8 +248,8 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  {
 		      vars_table->closeScope();
 		      while_mode = false;
-		      continue_label = $3.label;
-		      llvmWhileStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$4, dynamic_cast<Statement*>$8, $7.label, $3.label);
+		      continue_label = $3->label;
+		      llvmWhileStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$4, dynamic_cast<Statement*>$8, $7->label, $3->label);
 		  }
 		  | BREAK SC
 		  {
@@ -260,7 +260,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 
 		      $$ = new Statement();
 		      int address = buffer.emit("   br label @");
-		      $$->breaklist = buffer.makeList(make_pair(address,FIRST));
+		      $$->breaklist = buffer.makelist(make_pair(address,FIRST));
 		      buffer.genLabel();
 
 		  }
@@ -519,7 +519,7 @@ Exp:        LPAREN Exp RPAREN//Done
                         byteFlag=true;
                 }
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
-                string exp_reg=llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
+                string exp_reg = llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
                  dynamic_cast<Exp*>$$->reg = exp_reg;
 		  }
 		  | Exp RELOPN Exp  //todo
@@ -538,7 +538,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                 }
                 $$= new Exp("INT"); 
-                (dynamic_cast<Exp*>$$)->reg=(dynamic_cast<Exp*>$4)->reg//when casting the reg is the same as the casted exp?
+                (dynamic_cast<Exp*>$$)->reg=(dynamic_cast<Exp*>$4)->reg;  //when casting the reg is the same as the casted exp?
 			 
 		  }
 		  | Exp RELOPL Exp //DONE
@@ -549,7 +549,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
             
                 $$= new Exp("BOOL");
-                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
+                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
                 // dynamic_cast<Exp*>$$=freshVar();
             
@@ -561,22 +561,26 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                 }
                 $$= new Exp("BOOL");
-                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->new_name);
+                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
                //  dynamic_cast<Exp*>$$=freshVar();
 		  }
 
-M : { $$.label = string(buffer.genLabel()); }
+M : { $$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
 N : {
       $$ = new Statement();
-      int address = buffer.emmit("   br label @");
-      dynamic_cast<Statement*>$$.nextList = buffer.makeList(make_pair(address,FIRST));
+      int address = buffer.emit("   br label @");
+      dynamic_cast<Statement*>$$->nextlist = buffer.makelist(make_pair(address,FIRST));
     }
 		  
 %%
 
 int main(){
-	yyparse();
+	// init the codeBuffer
+    yyparse();
+    buffer.printGlobalBuffer();
+    std::cout << std::endl;
+    buffer.printCodeBuffer();
 }
 		  
 int yyerror(const char * message)

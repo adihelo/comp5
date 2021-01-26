@@ -23,6 +23,14 @@ string CodeBuffer::genLabel(){
 	return ret;
 }
 
+std::string CodeBuffer::getLabelName() {
+    std::stringstream label;
+    label << "label_";
+    label << buffer.size();
+    std::string ret(label.str());
+    return ret;
+}
+
 int CodeBuffer::emit(const string &s){
     buffer.push_back(s);
 	return buffer.size() - 1;

@@ -16,7 +16,7 @@ string freshVar() {
     return reg;
 }
 
-void emitComman(const string& command){
+void emitCommand(const string& command){
     buffer.emit(command);
 }
 

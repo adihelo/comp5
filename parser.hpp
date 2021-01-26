@@ -71,6 +71,7 @@ public:
 
 class Statement : public Node{
 public:
+    string label;
     vector<pair<int,BranchLabelIndex>>  nextlist, breaklist;
 
 };
