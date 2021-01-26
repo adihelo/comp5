@@ -399,7 +399,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                 }
                 dynamic_cast<Exp*>$1->reg = freshVar();
-               buffer.emit( dynamic_cast<Exp*>$1->reg+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
+               buffer.emit( dynamic_cast<Exp*>$1->reg+" = add i32 "+dynamic_cast<Num*>$1->getVal()+", 0");
                
 		  }
           | STRING //TOCONTINUE
@@ -455,8 +455,8 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
        
                 $$ = new Exp("BOOL");
-                dynamic_cast<Exp*>$$=freshVar();
-                dynamic_cast<Exp*>$$->falseList=buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falselist);//falseList of $$ is both falselists of $1 and $4
+                dynamic_cast<Exp*>$$->reg=freshVar();
+                dynamic_cast<Exp*>$$->falseList=buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falseList);//falseList of $$ is both falselists of $1 and $4
                 dynamic_cast<Exp*>$$->trueList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
 
             
@@ -472,8 +472,8 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                     }
                     $$ = new Exp("BOOL");
-                     dynamic_cast<Exp*>$$=freshVar();
-                    dynamic_cast<Exp*>$$->trueList=buffer.merge(dynamic_cast<Exp*>$1->trueList, dynamic_cast<Exp*>$4->truelist);//falseList of $$ is both falselists of $1 and $4
+                     dynamic_cast<Exp*>$$->reg=freshVar();
+                    dynamic_cast<Exp*>$$->trueList=buffer.merge(dynamic_cast<Exp*>$1->trueList, dynamic_cast<Exp*>$4->trueList);//falseList of $$ is both falselists of $1 and $4
                     dynamic_cast<Exp*>$$->falseList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
 		  }
           | Exp ADDSUB Exp       //todo add the set related cases
@@ -500,7 +500,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 //$$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
 
-                string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
+               // string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 string exp_reg=llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
                 dynamic_cast<Exp*>$$->reg =exp_reg;
 		  }

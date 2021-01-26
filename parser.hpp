@@ -57,9 +57,10 @@ public:
 /* new class*/
 
 class String: public Node{ //NEW
-    string value;
-    int size;
+   
 public:
+ string value;
+    int size;
     explicit String(string str) {
         value = str;
         size=value.size();
