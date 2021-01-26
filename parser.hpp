@@ -6,6 +6,8 @@
 #include <vector>
 #include <sstream>
 #include "hw3_output.hpp"
+#include "bp.hpp"
+
 //#include "generator.hpp"
 using namespace std;
 extern int yylineno;
