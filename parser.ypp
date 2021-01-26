@@ -443,7 +443,7 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | Exp{
             
-                string true_label=Buffer.genLabel(); 
+                string true_label=buffer.genLabel(); 
                 buffer.bpatch( dynamic_cast<Exp*>$1->trueList, true_label);
           
           
@@ -462,8 +462,8 @@ Exp:        LPAREN Exp RPAREN//Done
             
 		  }
           | Exp OR {     // the opposite of AND
-                string false_label=Buffer.genLabel(); 
-                Buffer.bpatch( dynamic_cast<Exp*>$1->falseList, false_label);
+                string false_label=buffer.genLabel(); 
+                buffer.bpatch( dynamic_cast<Exp*>$1->falseList, false_label);
 
 
             } Exp{
