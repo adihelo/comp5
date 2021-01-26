@@ -17,7 +17,7 @@ void emitCommand(const string& command);
 void zext(string& reg_to_zext, const string& type);
 void FuncDeclAllocation(int argsNum);
 void storeFuncArg(const string& type, int offset, int argsNumber);
-void storeVariable(const string& var_name, const string& value, const string& type, int offset, const int& argsNum);
+void storeVariable(string value, const string& type, int offset, const int& argsNum);
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch);//done
 void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch);
 string phi(Exp* exp);

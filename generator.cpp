@@ -72,13 +72,31 @@ void FuncDeclAllocation(int argsNum){
     curr_reg = argsNum +1;
 }
 
-void storeFuncArg(const string& type, const string& offset, int argsNumber){
+void storeFuncArg(const string& type, int offset, int argsNumber){
     string variable = freshVar();
-    buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32, [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + offset);
-    string off_reg ="%" + offset;
+    buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32, [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + to_string(offset));
+    string off_reg ="%" + to_string(offset);
     zext(off_reg, convert_to_llvm_type(type));
     buffer.emit("   store i32 " + off_reg + ", i32* " + variable);
 
+}
+
+void storeVariable(string value, const string& type, int offset, const int& argsNum){
+
+    zext(value,convert_to_llvm_type(type));
+    if(value=="0") {
+        value=freshVar();
+        buffer.emit("   " + value + " = add " + convert_to_llvm_type(type)+" 0, 0");
+    }
+    string var_ptr = freshVar();
+    if (offset >= 0) {
+        buffer.emit("   " + var_ptr + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset) );
+        buffer.emit("   store i32 " + value + ", i32* " + var_ptr);
+    } else {
+        offset++;
+        buffer.emit("   " + var_ptr + " = getelementptr [" + to_string(argsNum)+ " x i32], [" + to_string(argsNum)+ " x i32]* %params, i32 0, i32 " + to_string(-offset));
+        buffer.emit("   store i32 " + value + ", i32* " + var_ptr);
+    }
 }
 
 string phi(Exp* exp){
@@ -104,7 +122,7 @@ string phi(Exp* exp){
 
 }
 
-void llvmFuncDecl(const string& retType, const string& funcName, vector<string>& argTypes){
+void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes){
 
     string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
     for (int i = 0; i < argTypes.size()-1 ; ++i) {
