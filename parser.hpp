@@ -69,6 +69,12 @@ public:
 
 };
 
+class Statement : public Node{
+public:
+    vector<pair<int,BranchLabelIndex>>  nextlist, breaklist;
+
+};
+
 class Exp: public Node{
    
 public:

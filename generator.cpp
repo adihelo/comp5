@@ -75,6 +75,32 @@ void FuncDeclAllocation(int argsNum){
 void storeFuncArg(const string& type, const string& offset, int argsNumber){
     string variable = freshVar();
     buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32, [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + offset);
+    string off_reg ="%" + offset;
+    zext(off_reg, convert_to_llvm_type(type));
+    buffer.emit("   store i32 " + off_reg + ", i32* " + variable);
+
+}
+
+string phi(Exp* exp){
+    string bool_var = freshVar();
+    string phi_label = "phi_result" + buffer.genLabel();
+    string phi_false_label = "phi_false" + buffer.genLabel();
+    string phi_true_label = "phi_true" + buffer.genLabel();
+
+    // remove ":" from labels
+    phi_label.pop_back();
+    phi_false_label.pop_back();
+    phi_true_label.pop_back();
+
+    buffer.bpatch(exp->trueList, phi_true_label);
+    buffer.bpatch(exp->falseList, phi_false_label);
+    buffer.emit(phi_true_label + ":");
+    buffer.emit("   br label %" + phi_label );
+    buffer.emit(phi_false_label + ":");
+    buffer.emit("   br label %" + phi_label );
+    buffer.emit("   " + phi_label);
+    buffer.emit("   "+ bool_var +" = phi i1 [ true, %" + phi_true_label +"], [ false, %" + phi_false_label +" ]");
+    return bool_var;
 
 }
 
@@ -88,19 +114,49 @@ void llvmFuncDecl(const string& retType, const string& funcName, vector<string>&
     buffer.emit(define_command);
 }
 
+void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
+
+    buffer.bpatch(cond->trueList, label);
+    statement->nextlist = buffer.merge(cond->falseList, inst->nextlist);
+    string if_end_label = buffer.genLabel();
+    buffer.bpatch(statement->nextlist, if_end_label);
+
+}
+
+void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_false){
+
+    buffer.bpatch(cond->trueList, label_true);
+    buffer.bpatch(cond->falseList, label_false);
+    statement->nextlist = buffer.merge(inst_true->nextlist, buffer.merge(marker->nextlist, inst_false->nextlist));
+    string if_else_end_label = buffer.genLabel();
+    buffer.bpatch(statement->nextlist, if_else_end_label);
+
+}
+
+void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string break_label, string inst_label){
+
+    buffer.bpatch(inst->nextlist, inst_label);
+    buffer.bpatch(cond->trueList, break_label);
+    statement->nextlist = buffer.merge(cond->falseList, inst->breaklist);
+    buffer.emit("   br label %" + inst_label);
+    string while_end_label = buffer.genLabel();
+    buffer.bpatch(statement->nextlist, while_end_label);
+
+}
+
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
     string reg=freshVar();
     buffer.emit("%" + reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
     int line= buffer.emit("br i1 %" + reg + ", label @, label @");
-    result->addToFalseList({line, SECOND});
-    result->addToTrueList({line, FIRST});
+    addToFalseList(result, {line, SECOND});
+    addToTrueList(result, {line, FIRST});
 
 }
 
 void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
     string op=relop;
+    string reg=freshVar();
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
-        string reg=freshVar();
         buffer.emit(reg+" = icmp eq i32 0, "+exp2->reg);
         int line=buffer.emit("br i1 %" + reg + ", label @, label @");
         buffer.bpatch(buffer.makelist({line,FIRST}),buffer.genLabel());
@@ -147,7 +203,7 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
                 emit_str="call void";
             }else{
                 emit_str=to_string(curr_reg)+" = call i32";
-                curr_reg=freshVar();
+                curr_reg = freshVar();
             }
             emit_str+=" @"+func_name+"(";
             if(!var_vec.empty()){
