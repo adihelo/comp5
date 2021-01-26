@@ -103,6 +103,7 @@ FuncDecl: RetType ID LPAREN Formals RPAREN
 		      }
 		      curr_func_args.clear();
 		      emitCommand("\n}\n");
+		      std:cout << "okkkk" <<std::endl;
 		  }
 
 RetType:  Type
@@ -155,7 +156,7 @@ Statements: Statement
 		  }
 Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope();} RBRACE
 		  {
-		      
+		      $$ = new Statement();
 		  }
 		  | Type ID SC	
 		  {
@@ -166,6 +167,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		       }
 		       vars_table->Insert($2->name, $1->type);
 			   storeVariable("0", $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
+			   $$ = new Statement();
 		  }
 		  | Type ID ASSIGN Exp SC	
 		  {
@@ -185,7 +187,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                else{
                    storeVariable(dynamic_cast<Exp*>$4->reg, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
-		      
+               $$ = new Statement();
 		  }
 		  | ID ASSIGN Exp SC	
 		  {
@@ -205,10 +207,11 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                else{
                    storeVariable(dynamic_cast<Exp*>$4->reg, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
+               $$ = new Statement();
 		  }	
 		  | Call SC
 		  {
-		      
+		      $$ = new Statement();
 		  }
 		  | RETURN SC	
 		  {
@@ -218,6 +221,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		      }
 
 		      buffer.emit("   ret void");
+		      $$ = new Statement();
 		  }
 		  | RETURN Exp SC
 		  {
@@ -233,6 +237,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                   zext(dynamic_cast<Exp*>$2->reg, convert_to_llvm_type($2->type));
               }
               buffer.emit("   ret " +  convert_to_llvm_type($2->type) + " " + dynamic_cast<Exp*>$2->reg);
+              $$ = new Statement();
 		  }
 		  | IF LPAREN ExpBool RPAREN M Statement
 		  {
@@ -243,12 +248,14 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  | IF LPAREN ExpBool RPAREN M Statement ELSE {  vars_table->closeScope(); vars_table->openScope();} N M Statement
 		  {
 		      vars_table->closeScope();
+		      $$ = new Statement();
 		      llvmIfElseStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6,
-		       dynamic_cast<Statement*>$11, dynamic_cast<Statement*>$7, dynamic_cast<Statement*>$5->label,
+		       dynamic_cast<Statement*>$11, dynamic_cast<Statement*>$6, dynamic_cast<Statement*>$5->label,
 		       dynamic_cast<Statement*>$10->label);
 		  }
 		  | WHILE LPAREN Q Exp RPAREN {vars_table->openScope(); while_mode = true; } M Statement
 		  {
+		      $$ = new Statement();
 		      vars_table->closeScope();
 		      while_mode = false;
 		      continue_label = dynamic_cast<Statement*>$3->label;

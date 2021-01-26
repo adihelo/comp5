@@ -144,19 +144,10 @@ void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_false){
 
     buffer.bpatch(cond->trueList, label_true);
-   // printf("1\n");
     buffer.bpatch(cond->falseList, label_false);
-   // printf("2\n");
-
     statement->nextlist = buffer.merge(inst_true->nextlist, buffer.merge(marker->nextlist, inst_false->nextlist));
-    //printf("3\n");
-
     string if_else_end_label = buffer.genLabel();
-   // printf("4\n");
-
     buffer.bpatch(statement->nextlist, if_else_end_label);
-   // printf("5\n");
-
 
 }
 
@@ -238,8 +229,7 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                         if(i<var_vec.size()-1) emit_str+=" ,";   
                     }
                 }else{
-                   emit_str+=")"
-                
+                   emit_str+=")";
                 }
                 buffer.emit(emit_str);
            }
