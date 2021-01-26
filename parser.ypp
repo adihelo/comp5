@@ -305,12 +305,12 @@ Call:      ID LPAREN Explist RPAREN
 
 Explist:    Exp
           {
-	         curr_explist.push_back({$1->type, $1->reg}); 
+	         curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, dynamic_cast<Exp*>$1->reg)); 
           
 		  }
           | Exp COMMA Explist
 		  {
-            curr_explist.push_back({$1->type, $1->reg});
+            curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, dynamic_cast<Exp*>$1->reg));
 		  }
 
 Type :      INT
@@ -360,9 +360,9 @@ Exp:        LPAREN Exp RPAREN//Done
                     buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
                     string reg2=freshVar();
                     buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
-                    int line = buffer.emit("br i1 "+reg2+", label @, label @")
-                    addToFalseList(dynamic_cast<Exp*>$$,{line,SECOND});
-                    addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
+                    int line = buffer.emit("br i1 "+reg2+", label @, label @");
+                    addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
+                    addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
                 }
 		  }
           | Call //DONE
@@ -376,9 +376,9 @@ Exp:        LPAREN Exp RPAREN//Done
                     buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
                     string reg2=freshVar();
                     buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
-                    int line = buffer.emit("br i1 "+reg2+", label @, label @")
-                    addToFalseList(dynamic_cast<Exp*>$$,{line,SECOND});
-                    addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
+                    int line = buffer.emit("br i1 "+reg2+", label @, label @");
+                    addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
+                    addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
                 }
            
 		  }
@@ -386,7 +386,7 @@ Exp:        LPAREN Exp RPAREN//Done
 		  {
                 $$= new Exp("INT");
                  dynamic_cast<Exp*>$$->reg=freshVar();
-                buffer.emit(dynamic_cast<Exp*>$$->reg+" = add i32 "+dynamic_cast<Num*>$1->value+", 0");
+                buffer.emit(dynamic_cast<Exp*>$$->reg+" = add i32 "+dynamic_cast<Num*>$1->getVal()+", 0");
                
 		  }
           | NUM B //DONE
@@ -407,7 +407,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("STRING");
                 string str=(dynamic_cast<String*>$1)->getValue(); 
                 str+='\00';
-                int str_size = (dynamic_cast<String*>$1)->size(); 
+                int str_size = dynamic_cast<String*>$1->getSize(); 
                 lastStringSize=str_size;
                 //dynamic_cast<Exp>$$->reg=freshVar();
                // lastStringReg=freshVar();
@@ -419,14 +419,14 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,1");
                 int line=buffer.emit("br label @");
-                addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
+                addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
 		  }
           | FALSE //DONE
 		  {
               $$= new Exp("BOOL");
               //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,0");
               int line=buffer.emit("br label @");
-              addToFalseList(dynamic_cast<Exp*>$$, {line,FIRST});
+              addToFalseList(dynamic_cast<Exp*>$$, make_pair(line,FIRST));
 		  }
           | NOT Exp
 		  {

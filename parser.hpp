@@ -293,7 +293,7 @@ public:
         string ret_type;
         vector<string> reversed;
         for (int i = args.size()-1; i >=0 ; --i) {
-            reversed.push_back(args[i]);
+            reversed.push_back(args[i].first);
         }
         for (auto & function : *functions) {
             if(function.getName() == func_name){
