@@ -288,7 +288,7 @@ public:
      * and if the function exists.
      * returned value: return type of the called function
      */
-    string checkArgsValid(const string& func_name, vector<string> args){
+    string checkArgsValid(const string& func_name, vector<pair<string,string>> args){
         bool exists = false;
         string ret_type;
         vector<string> reversed;

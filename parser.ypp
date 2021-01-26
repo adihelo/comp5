@@ -290,7 +290,7 @@ Call:      ID LPAREN Explist RPAREN
           {
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
-              string res_reg=vars_table.call_emit(type, name, curr_explist); 
+              string res_reg=call_emit(func_type, name, curr_explist); 
               $$=new Call(func_type,res_reg);
 			  curr_explist.clear();
 		  }
@@ -298,7 +298,7 @@ Call:      ID LPAREN Explist RPAREN
 		  {
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
-              string res_reg=vars_table.call_emit(type, name, {}); 
+              string res_reg=call_emit(func_type, name, {}); 
               $$=new Call(func_type,res_reg);
 			  curr_explist.clear();
 		  }
@@ -360,14 +360,14 @@ Exp:        LPAREN Exp RPAREN//Done
                     buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
                     string reg2=freshVar();
                     buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
-                    string line = buffer.emit("br i1 "+reg2+", label @, label @")
+                    int line = buffer.emit("br i1 "+reg2+", label @, label @")
                     addToFalseList(dynamic_cast<Exp*>$$,{line,SECOND});
                     addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
                 }
 		  }
           | Call //DONE
 		  {
-                dynamic_cast<Exp*>$$= new Exp($1->type);
+                $$= new Exp($1->type);
                 dynamic_cast<Exp*>$$->name= $1->name;
                 dynamic_cast<Exp*>$$->reg= dynamic_cast<Call*>$1->reg;
                 if (dynamic_cast<Call*>$1->type=="BOOL") {
@@ -376,7 +376,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
                     string reg2=freshVar();
                     buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
-                    string line = buffer.emit("br i1 "+reg2+", label @, label @")
+                    int line = buffer.emit("br i1 "+reg2+", label @, label @")
                     addToFalseList(dynamic_cast<Exp*>$$,{line,SECOND});
                     addToTrueList(dynamic_cast<Exp*>$$,{line,FIRST});
                 }
