@@ -24,7 +24,7 @@ void zext(string& reg_to_zext, const string& type){
     if (type == "i1" || type == "i8"){
         string zexted_reg = freshVar();
         string zext_command = "  " + zexted_reg + " = zext " + type + " " + reg_to_zext + " to i32";
-        emitComman(zext_command);
+        emitCommand(zext_command);
         reg_to_zext = zexted_reg;
     }
 }
@@ -105,7 +105,6 @@ string phi(Exp* exp){
 }
 
 void llvmFuncDecl(const string& retType, const string& funcName, vector<string>& argTypes){
-    CodeBuffer& buffer = CodeBuffer::instance();
 
     string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
     for (int i = 0; i < argTypes.size()-1 ; ++i) {

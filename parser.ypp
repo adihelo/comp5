@@ -14,7 +14,8 @@
     vector<string> curr_func_args;   //saves the args of the function currently being declared.
     vector<pair<string,string>> curr_explist;     //saves the args given to the currently called function.//pair <type,reg >
     bool while_mode = false;
-
+    int lastStringSize =0;
+    int lastStringReg =0;
     string continue_label;
 
 	
@@ -89,7 +90,7 @@ FuncDecl: RetType ID LPAREN Formals RPAREN
               llvmFuncDecl($1->getType(), $2->name, curr_func_args);
               FuncDeclAllocation(curr_func_args.size());
               for (int i=0 ; i < curr_func_args.size() ; i++){
-                  storeFuncArg(curr_func_args[i], to_string(i), curr_func_args.size());
+                  storeFuncArg(curr_func_args[i], i, curr_func_args.size());
               }
 
           } LBRACE Statements RBRACE
@@ -177,10 +178,10 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                vars_table->Insert($2->name, $1->type);
 			   if($1->getType() == "bool"){
                    string value = phi(dynamic_cast<Exp*>$4);
-                   storeVariable($2->name, value, $1->type, varGetOffset($2->name), curr_func_args.size());
+                   storeVariable($2->name, value, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
                else{
-                   storeVariable($2->name, $4->reg, $1->type, varGetOffset($2->name), curr_func_args.size());
+                   storeVariable($2->name, dynamic_cast<Exp*>$4->reg, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
 		      
 		  }
@@ -197,10 +198,10 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                }
 			   if($1->getType() == "bool"){
                    string value = phi(dynamic_cast<Exp*>$4);
-                   storeVariable($2->name, value, $1->type, varGetOffset($2->name), curr_func_args.size());
+                   storeVariable($2->name, value, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
                else{
-                   storeVariable($2->name, $4->reg, $1->type, varGetOffset($2->name), curr_func_args.size());
+                   storeVariable($2->name, dynamic_cast<Exp*>$4->reg, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
 		  }	
 		  | Call SC
@@ -223,21 +224,21 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
               	  exit(0);
               }
               if ($2->type == "bool"){
-                  $2->reg = phi(dynamic_cast<Exp*>$2);
+                  dynamic_cast<Exp*>$2->reg = phi(dynamic_cast<Exp*>$2);
               }
 
               if (funcs_table->lastFuncType() != $2->type){
-                  zext($2->reg, convert_to_llvm_type($2->type));
+                  zext(dynamic_cast<Exp*>$2->reg, convert_to_llvm_type($2->type));
               }
-              buffer.emit("   ret " +  convert_to_llvm_type($2->type) + " " + $2->reg);
+              buffer.emit("   ret " +  convert_to_llvm_type($2->type) + " " + dynamic_cast<Exp*>$2->reg);
 		  }
 		  | IF LPAREN ExpBool RPAREN M Statement
 		  {
 		      $$ = new Statement();
 		      vars_table->closeScope();
-		      llvmIfStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6, M->label);
+		      llvmIfStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6, dynamic_cast<Statement*>$5->label);
 		  }
-		  | IF LPAREN ExpBool RPAREN M Statement N ELSE {  vars_table->closeScope(); vars_table->openScope();}  M Statement
+		  | IF LPAREN ExpBool RPAREN M Statement ELSE {  vars_table->closeScope(); vars_table->openScope();} N M Statement
 		  {
 		      vars_table->closeScope();
 		      llvmIfElseStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6,
@@ -248,8 +249,8 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  {
 		      vars_table->closeScope();
 		      while_mode = false;
-		      continue_label = $3->label;
-		      llvmWhileStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$4, dynamic_cast<Statement*>$8, $7->label, $3->label);
+		      continue_label = dynamic_cast<Statement*>$3->label;
+		      llvmWhileStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$4, dynamic_cast<Statement*>$8, dynamic_cast<Statement*>$7->label, dynamic_cast<Statement*>$3->label);
 		  }
 		  | BREAK SC
 		  {
@@ -260,7 +261,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 
 		      $$ = new Statement();
 		      int address = buffer.emit("   br label @");
-		      $$->breaklist = buffer.makelist(make_pair(address,FIRST));
+		      dynamic_cast<Statement*>$$->breaklist = buffer.makelist(make_pair(address,FIRST));
 		      buffer.genLabel();
 
 		  }

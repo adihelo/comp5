@@ -6,8 +6,9 @@
 #include "parser.hpp"
 #define buffer CodeBuffer::instance()
 
-int lastStringSize=0;
-int lastStringReg=0;
+extern int lastStringSize;
+extern int lastStringReg;
+
 /********************* helper functions ******************/
 
 string freshVar();
@@ -28,7 +29,7 @@ string emit_id(int offset);
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes);
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop);
 void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label);
-void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_fals&e);
+void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_false);
 void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string break_label, string inst_label);
 string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte);
 string llvmOpCommand(const string& operation);
