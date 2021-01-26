@@ -442,13 +442,13 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
 			  
 		  }
-          | Exp{
+          | Exp AND{
             
                 string true_label=buffer.genLabel(); 
                 buffer.bpatch( dynamic_cast<Exp*>$1->trueList, true_label);
           
           
-          } AND Exp 
+          } Exp 
 		  {
                 if(($1->type != "BOOL") || ($4->type != "BOOL")){
                     output::errorMismatch(yylineno);
