@@ -105,6 +105,7 @@ string phi(Exp* exp){
 }
 
 void llvmFuncDecl(const string& retType, const string& funcName, vector<string>& argTypes){
+    CodeBuffer& buffer = CodeBuffer::instance();
 
     string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
     for (int i = 0; i < argTypes.size()-1 ; ++i) {
@@ -153,7 +154,7 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
 
 }
 
-void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
+string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte){
     string op=relop;
     string reg=freshVar();
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
@@ -167,32 +168,28 @@ void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool i
         if(isByte)  op="udiv";
         
     }
-    
-    buffer.emit(to_string(curr_reg)+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
+    reg=freshVar();
+    buffer.emit(reg+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
     if (isByte) //on exp is byte
     {
-        //truncating and zext ( HW page 4)
+        //trunc and zext ( HW page 4)
         string prev_reg=reg;
         string new_reg=freshVar();
-		//buffer.emit("%"+new_reg+"=inttoptr i32 %"+to_string( prev_reg)+" to i8*");
-		//prev_reg=new_reg;
-        //new_reg=freshVar();
-		//buffer.emit("%"+new_reg+"=ptrtoint i8* %"+to_string(prev_reg)+" to i8");
-        
-         buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8*");
-
+        buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8");
 		prev_reg=new_reg;
         new_reg=freshVar();
 		buffer.emit(new_reg+"=zext i8 "+prev_reg+" to i32");
 
     }
-    
+    if(isByte) return new_reg;
+    return reg;
 }
 /*
    emit function for call
 */
-void call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
+string call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec){  //NEW
         string emit_str;
+
          if (func_name=="print") { //print like descirbed in pdf.
            // string size=to_string(table.lastStringSize);
             //TODO: Add like described for exit in hw5 pdf file.
@@ -209,13 +206,41 @@ void call_emit(const string& func_type, const string& func_name, vector<pair<str
             if(!var_vec.empty()){
                 for (int i=0; i<var_vec.size()-1; i++){
                     emit_str+="i32 "+to_string(var_vec[i].second)+", ";
+
+        int call_res_reg;
+           if(func_name=="print"){
+               int reg=lastStringReg-1;
+               int size=lastStringSize;
+                Buffer.emit("call void @print(i8* getelementptr (["+to_string(size)+" x i8], ["+to_string(size)+" x i8]* @string"+to_string(reg)+", i64 0, i64 0))";); 
+               
+           }else{
+                if(func_type=="VOID"){
+                    emit_str="call void";
+                }else{
+                    call_res_reg = freshVar();
+                    emit_str=call_res_reg+" = call i32";
+               
                 }
-                emit_str+="i32 "+to_string(var_vec.back().second)+")";
-            }
-            buffer.emit(emit_str);
-        }
+                emit_str+=" @"+func_name+"(";
+                if(!var_vec.empty()){
+                    for (int i=0; i<var_vec.size(); i++){
+                        emit_str+="i32 "+var_vec[i].second;                 
+                        if(i<var_vec.size()-1) emit_str+=" ,";   
+                    }
+                }
+                buffer.emit(emit_str);
+           }
+        return call_res_reg;
     }
-    
+string emit_id(int offset)
+	{
+        string reg1=freshVar();
+        buffer.emit(reg1+ " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
+        string reg2=freshVar();
+        buffer.emit(reg2+" = load i32, i32* "+reg1;);
+        return reg2;
+					
+	}  
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
     exp->falseList=CodeBuffer::merge(exp->falseList,CodeBuffer::makelist(branch));
 

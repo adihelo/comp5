@@ -6,7 +6,8 @@
 #include "parser.hpp"
 #define buffer CodeBuffer::instance()
 
-
+int lastStringSize=0;
+int lastStringReg=0;
 /********************* helper functions ******************/
 
 string freshVar();
@@ -20,16 +21,17 @@ void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch);//done
 void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch);
 string phi(Exp* exp);
 
-
-
+string call_emit(const string& func_type, const string& func_name, vector<pair<string,int>> var_vec);
+string emit_id(int offset);
 
 /******************** LLVM functions ********************/
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes);
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop);
-void llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte);
 void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label);
 void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_fals&e);
 void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string break_label, string inst_label);
+string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool isByte);
+
 
 
 
