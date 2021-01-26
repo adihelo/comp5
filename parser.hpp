@@ -210,7 +210,7 @@ public:
     }
 
     void closeScope(){
-        output::endScope();
+       // output::endScope();
         for (auto & i : names->back()) {
             output::printID(i.getName(), i.getOffset(), i.getType());
         }

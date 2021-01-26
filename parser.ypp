@@ -4,6 +4,8 @@
 	#include "hw3_output.hpp"
 	//#include "parser.hpp"
 	#include "generator.hpp"
+    #define YYERROR_VERBOSE 1
+    #define YYDEBUG 1
 	using namespace std;
 	extern int yylex();
 	extern int yylineno;
@@ -280,6 +282,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 
 
 ExpBool: Exp{
+
     if($1->type != "BOOL"){
         output::errorMismatch(yylineno);
         exit(0);
@@ -416,9 +419,11 @@ Exp:        LPAREN Exp RPAREN//Done
               
 		  }
           | TRUE //DONE
-		  {
+		  { 
+               
                 $$= new Exp("BOOL");
                 //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,1");
+                
                 int line=buffer.emit("br label @");
                 addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
 		  }
@@ -580,6 +585,7 @@ N : {
 int main(){
 	// init the codeBuffer
     yyparse();
+    yydebug=1;
     buffer.printGlobalBuffer();
     std::cout << std::endl;
     buffer.printCodeBuffer();
