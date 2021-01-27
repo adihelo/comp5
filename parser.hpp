@@ -210,10 +210,6 @@ public:
     }
 
     void closeScope(){
-       // output::endScope();
-        for (auto & i : names->back()) {
-            output::printID(i.getName(), i.getOffset(), i.getType());
-        }
         if(offsets->size()) {
             offsets->pop_back();
             names->pop_back();

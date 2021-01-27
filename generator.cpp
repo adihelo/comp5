@@ -135,11 +135,8 @@ void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTyp
 void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 
     buffer.bpatch(cond->trueList, label);
-   // printf("1\n");
     statement->nextlist = buffer.merge(cond->falseList, inst->nextlist);
-    //printf("2\n");
     string if_end_label = buffer.genLabel();
-    //printf("3\n");
     buffer.bpatch(statement->nextlist, if_end_label);
 
 }
@@ -147,19 +144,11 @@ void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_false){
 
     buffer.bpatch(cond->trueList, label_true);
-   // printf("1\n");
     buffer.bpatch(cond->falseList, label_false);
-    //printf("2\n");
-    
     statement->nextlist = buffer.merge(inst_true->nextlist, buffer.merge(marker->nextlist, inst_false->nextlist));
-    printf("3\n");
-     // statement->breaklist = buffer.merge(inst_true->breaklist, inst_false->breaklist);//NEW
-   string if_else_end_label = buffer.genLabel();
-    printf("4\n");
+    statement->breaklist = buffer.merge(inst_true->breaklist, inst_false->breaklist);//NEW
+    string if_else_end_label = buffer.genLabel();
     buffer.bpatch(statement->nextlist, if_else_end_label);
-    printf("5\n");
-  
-
 }
 
 void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string break_label, string inst_label){
