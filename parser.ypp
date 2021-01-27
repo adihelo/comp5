@@ -172,6 +172,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  }
 		  | Type ID ASSIGN Exp SC	
 		  {
+          
 		       if(vars_table->checkVariableDeclared($2->name) != "" || funcs_table->funcExists($2->name)){
                	   output::errorDef(yylineno, $2->name);
                	   exit(0);
@@ -181,11 +182,12 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                    exit(0);
                }
                vars_table->Insert($2->name, $1->type);
-			   if($1->getType() == "bool"){
+			   if($1->getType() == "BOOL"){
                    string value = phi(dynamic_cast<Exp*>$4);
                    storeVariable(value, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
                else{
+               
                    storeVariable(dynamic_cast<Exp*>$4->reg, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
                $$ = new Statement();
@@ -201,7 +203,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                     output::errorMismatch(yylineno);
                     exit(0);
                }
-			   if($1->getType() == "bool"){
+			   if($1->getType() == "BOOL"){
                    string value = phi(dynamic_cast<Exp*>$4);
                    storeVariable(value, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
@@ -432,15 +434,17 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | NUM B //DONE
 		  {
-
+                
                 $$= new Exp("BYTE");
                 string value = dynamic_cast<Num*>$1->getVal();
                 if(stoi(value) > 255 ){   //byte can't be above 255
                     output::errorByteTooLarge(yylineno, value);
                     exit(0);
                 }
-                dynamic_cast<Exp*>$1->reg = freshVar();
-               buffer.emit( dynamic_cast<Exp*>$1->reg+" = add i32 "+dynamic_cast<Num*>$1->getVal()+", 0");
+                
+                dynamic_cast<Exp*>$$->reg = freshVar();
+          
+                buffer.emit( dynamic_cast<Exp*>$$->reg+" = add i32 "+dynamic_cast<Num*>$1->getVal()+", 0");
                
 		  }
           | STRING //TOCONTINUE
