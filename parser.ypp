@@ -329,8 +329,10 @@ Explist:    Exp
              if (exp_type=="BOOL") {
                 reg=llvmExpIsBool(dynamic_cast<Exp*>$1);
                 curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, reg)); 
-            } 
+               
+            } else{
 	         curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, dynamic_cast<Exp*>$1->reg)); 
+             }
           
 		  }
           | Exp {

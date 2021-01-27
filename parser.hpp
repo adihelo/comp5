@@ -297,6 +297,7 @@ public:
         for (auto & function : *functions) {
             if(function.getName() == func_name){
                 if(function.getArgs().size() != args.size()){
+                  //  printf("function.getArgs().size() is %d    args.size()   is %d\n",function.getArgs().size(), args.size());
                     vector<string> args_vec = function.getArgs();
                     output::errorPrototypeMismatch(yylineno, func_name, args_vec);
                     exit(0);
