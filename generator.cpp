@@ -20,6 +20,7 @@ void emitCommand(const string& command){
     buffer.emit(command);
 }
 
+
 void zext(string& reg_to_zext, const string& type){
     if (type == "i1" || type == "i8"){
         string zexted_reg = freshVar();
@@ -136,7 +137,9 @@ void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 
     buffer.bpatch(cond->trueList, label);
     statement->nextlist = buffer.merge(cond->falseList, inst->nextlist);
-    string if_end_label = buffer.genLabel();
+    string if_end_label = buffer.getLabelName();
+    buffer.emit("br label %" + if_end_label);
+    buffer.emit(if_end_label + ":");
     buffer.bpatch(statement->nextlist, if_end_label);
 
 }
@@ -147,7 +150,9 @@ void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, State
     buffer.bpatch(cond->falseList, label_false);
     statement->nextlist = buffer.merge(inst_true->nextlist, buffer.merge(marker->nextlist, inst_false->nextlist));
     statement->breaklist = buffer.merge(inst_true->breaklist, inst_false->breaklist);//NEW
-    string if_else_end_label = buffer.genLabel();
+    string if_else_end_label = buffer.getLabelName();
+    buffer.emit("br label %" + if_else_end_label);
+    buffer.emit(if_else_end_label + ":");
     buffer.bpatch(statement->nextlist, if_else_end_label);
 }
 
