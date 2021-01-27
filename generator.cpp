@@ -224,14 +224,14 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                     emit_str="call void";
                 }else{
                     call_res_reg = freshVar();
-                    emit_str=call_res_reg+" = call i32";
+                    emit_str=call_res_reg+" = call " + convert_to_llvm_type(func_type);
                
                 }
                 emit_str+=" @"+func_name+"(";
                 if(!var_vec.empty()){
                     for (int i=0; i<var_vec.size(); i++){
                         if(var_vec[i].first == "BYTE" || var_vec[i].first=="INT"){
-                        emit_str+="i32 "+var_vec[i].second;
+                            emit_str+="i32 "+var_vec[i].second;
                         }else{
                              emit_str+=convert_to_llvm_type(var_vec[i].first)+ " "+var_vec[i].second;
                         }                            
@@ -275,7 +275,7 @@ string llvmExpIsBool(Exp* exp){
     addToTrueList(exp,make_pair(line2,FIRST));
     buffer.bpatch(exp->trueList, buffer.genLabel());
     string reg = freshVar();
-    buffer.emit(reg+" = phi i32 [1, %"+true_label+"], [0, %"+false_label+"]"); 
+    buffer.emit(reg+" = phi i1 [1, %"+true_label+"], [0, %"+false_label+"]"); 
     return reg;
 
 }
