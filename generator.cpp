@@ -129,7 +129,11 @@ void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTyp
     for (const auto & argType : argTypes) {
         define_command += convert_to_llvm_type(argType) + ",";
     }
-    define_command += convert_to_llvm_type(argTypes.back()) + ") {";
+    if(argTypes.size()) {
+        define_command.pop_back();
+    }
+    define_command += ") {";
+
     buffer.emit(define_command);
 }
 
