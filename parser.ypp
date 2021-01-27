@@ -253,7 +253,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		      vars_table->closeScope();
 		      $$ = new Statement();
 		      llvmIfElseStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6,
-		      dynamic_cast<Statement*>$11, dynamic_cast<Statement*>$6, dynamic_cast<Statement*>$5->label,
+		      dynamic_cast<Statement*>$9, dynamic_cast<Statement*>$11, dynamic_cast<Statement*>$5->label,
 		      dynamic_cast<Statement*>$10->label);
 
 		  }

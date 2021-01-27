@@ -74,7 +74,7 @@ void FuncDeclAllocation(int argsNum){
 
 void storeFuncArg(const string& type, int offset, int argsNumber){
     string variable = freshVar();
-    buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32, [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + to_string(offset));
+    buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32], [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + to_string(offset));
     string off_reg ="%" + to_string(offset);
     zext(off_reg, convert_to_llvm_type(type));
     buffer.emit("   store i32 " + off_reg + ", i32* " + variable);
