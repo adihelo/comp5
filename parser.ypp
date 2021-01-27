@@ -194,7 +194,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  }
 		  | ID ASSIGN Exp SC	
 		  {
-		     
+
 		       string id_type = vars_table->checkVariableDeclared($1->name);
 		       if(id_type == ""){
                     output::errorUndef(yylineno, $1->name);
@@ -205,12 +205,12 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                     exit(0);
                }
 
-			   if($1->getType() == "BOOL"){
-                   string value = phi(dynamic_cast<Exp*>$4);
-                   storeVariable(value, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
+			   if(id_type == "BOOL"){
+                   string value = phi(dynamic_cast<Exp*>$3);
+                   storeVariable(value, id_type, vars_table->varGetOffset($1->name), curr_func_args.size());
                }
                else{
-                   storeVariable(dynamic_cast<Exp*>$3->reg, $1->type, vars_table->varGetOffset($1->name), curr_func_args.size());
+                   storeVariable(dynamic_cast<Exp*>$3->reg, id_type, vars_table->varGetOffset($1->name), curr_func_args.size());
 
                }
                $$ = new Statement();
