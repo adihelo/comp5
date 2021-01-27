@@ -135,8 +135,11 @@ void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTyp
 void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 
     buffer.bpatch(cond->trueList, label);
+   // printf("1\n");
     statement->nextlist = buffer.merge(cond->falseList, inst->nextlist);
+    //printf("2\n");
     string if_end_label = buffer.genLabel();
+    //printf("3\n");
     buffer.bpatch(statement->nextlist, if_end_label);
 
 }
@@ -144,10 +147,18 @@ void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, Statement* inst_false, Statement* marker, string label_true, string label_false){
 
     buffer.bpatch(cond->trueList, label_true);
+   // printf("1\n");
     buffer.bpatch(cond->falseList, label_false);
+    //printf("2\n");
+    
     statement->nextlist = buffer.merge(inst_true->nextlist, buffer.merge(marker->nextlist, inst_false->nextlist));
-    string if_else_end_label = buffer.genLabel();
+    printf("3\n");
+      statement->breaklist = buffer.merge(inst_true->breaklist, inst_false->breaklist);//NEW
+   string if_else_end_label = buffer.genLabel();
+    printf("4\n");
     buffer.bpatch(statement->nextlist, if_else_end_label);
+    printf("5\n");
+  
 
 }
 
@@ -254,4 +265,19 @@ void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch){
 
 }
 
+string llvmExpIsBool(Exp* exp){
+    string true_label=  buffer.genLabel();
+    buffer.bpatch(exp->trueList, true_label); 
+    exp->trueList.clear();
+    int line =buffer.emit("br label @");
+    addToTrueList(exp,make_pair(line,FIRST));
+    string false_label=  buffer.genLabel();
+    buffer.bpatch(exp->falseList, false_label); 
+    int line2 =buffer.emit("br label @");
+    addToTrueList(exp,make_pair(line2,FIRST));
+    buffer.bpatch(exp->trueList, buffer.genLabel());
+    string reg = freshVar();
+    buffer.emit(reg+" = phi i32 [1, %"+true_label+"], [0, %"+false_label+"]"); 
+    return reg;
 
+}

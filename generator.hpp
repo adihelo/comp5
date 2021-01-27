@@ -24,7 +24,7 @@ string phi(Exp* exp);
 
 string call_emit(const string& func_type, const string& func_name, vector<pair<string,string>> var_vec);
 string emit_id(int offset);
-
+string llvmExpIsBool(Exp* exp);
 /******************** LLVM functions ********************/
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes);
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop);

@@ -98,17 +98,19 @@ FuncDecl: RetType ID LPAREN Formals RPAREN
           } LBRACE Statements RBRACE
 
 		  {
-		      if($1->getType() == "void"){
+		      if($1->getType() == "VOID"){
+                 // printf("1\n");
 		          buffer.emit("   ret void");
 		      }
 		      curr_func_args.clear();
 		      emitCommand("\n}\n");
-		      std:cout << "okkkk" <<std::endl;
+		      //std:cout << "okkkk" <<std::endl;
 		  }
 
 RetType:  Type
           {
-			  $$->type = $1->type;
+			 $$->type = $1->type;
+             
 		  }
 		  | VOID
 		  {
@@ -148,11 +150,9 @@ FormalDecl: Type ID
 		  
 Statements: Statement
 		  {
-
 		  }
 		  | Statements Statement	
 		  {
-		      
 		  }
 Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope();} RBRACE
 		  {
@@ -252,6 +252,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		      llvmIfElseStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6,
 		       dynamic_cast<Statement*>$11, dynamic_cast<Statement*>$6, dynamic_cast<Statement*>$5->label,
 		       dynamic_cast<Statement*>$10->label);
+               
 		  }
 		  | WHILE LPAREN Q Exp RPAREN {vars_table->openScope(); while_mode = true; } M Statement
 		  {
@@ -289,7 +290,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 
 
 ExpBool: Exp{
-
+     $$=$1;
     if($1->type != "BOOL"){
         output::errorMismatch(yylineno);
         exit(0);
@@ -299,14 +300,17 @@ ExpBool: Exp{
 
 Call:      ID LPAREN Explist RPAREN
           {
+              
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
               string res_reg=call_emit(func_type, name, curr_explist); 
               $$=new Call(func_type,res_reg);
 			  curr_explist.clear();
+              
 		  }
           | ID LPAREN RPAREN
 		  {
+              printf("2 calll\n");
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
               string res_reg=call_emit(func_type, name, {}); 
@@ -316,10 +320,27 @@ Call:      ID LPAREN Explist RPAREN
 
 Explist:    Exp
           {
+          
+            string exp_type =dynamic_cast<Exp*>$1->type;
+            printf("exp type is %s\n",exp_type.c_str());
+            string reg;
+             if (exp_type=="BOOL") {
+                reg=llvmExpIsBool(dynamic_cast<Exp*>$1);
+                curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, reg)); 
+            } 
 	         curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, dynamic_cast<Exp*>$1->reg)); 
           
 		  }
-          | Exp COMMA Explist
+          | Exp {
+          
+            string exp_type =dynamic_cast<Exp*>$1->type;
+            printf("exp type is %s\n",exp_type.c_str());
+            string reg;
+             if (exp_type=="BOOL") {
+                dynamic_cast<Exp*>$1->reg=llvmExpIsBool(dynamic_cast<Exp*>$1);
+            } 
+          
+		  } COMMA Explist
 		  {
             curr_explist.push_back(make_pair(dynamic_cast<Exp*>$1->type, dynamic_cast<Exp*>$1->reg));
 		  }
@@ -348,6 +369,7 @@ Type :      INT
 
 Exp:        LPAREN Exp RPAREN//Done
           {
+          
 			 $$= new Exp((dynamic_cast<Exp*>$2));;
 		  }
           | ID
@@ -415,6 +437,7 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | STRING //TOCONTINUE
 		  {
+         
                 $$= new Exp("STRING");
                 string str=(dynamic_cast<String*>$1)->getValue(); 
                 str+='\00';
@@ -427,19 +450,22 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | TRUE //DONE
 		  { 
-               
+               printf("0 true\n");
                 $$= new Exp("BOOL");
                 //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,1");
-                
+                printf("1true\n");
                 int line=buffer.emit("br label @");
                 addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
+                printf("2true\n");
 		  }
           | FALSE //DONE
 		  {
               $$= new Exp("BOOL");
               //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,0");
+              printf("1false\n");
               int line=buffer.emit("br label @");
               addToFalseList(dynamic_cast<Exp*>$$, make_pair(line,FIRST));
+              printf("2false\n");
 		  }
           | NOT Exp
 		  {
@@ -579,7 +605,7 @@ Exp:        LPAREN Exp RPAREN//Done
                //  dynamic_cast<Exp*>$$=freshVar();
 		  }
 
-M : { $$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
+M : {$$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
 Q : { $$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
 N : {
       $$ = new Statement();
