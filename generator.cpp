@@ -31,11 +31,11 @@ void zext(string& reg_to_zext, const string& type){
 }
 
 string convert_to_llvm_type(const string& type){
-    if(type == "void"){
+    if(type == "VOID"){
         return "void";
-    } else if (type == "bool"){
+    } else if (type == "BOOL"){
         return "i1";
-    } else if (type == "byte"){
+    } else if (type == "BYTE"){
         return "i8";
     } else{
         return "i32";
@@ -230,7 +230,11 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                 emit_str+=" @"+func_name+"(";
                 if(!var_vec.empty()){
                     for (int i=0; i<var_vec.size(); i++){
-                        emit_str+="i32 "+var_vec[i].second;                 
+                        if(var_vec[i].first == "BYTE" || var_vec[i].first=="INT"){
+                        emit_str+="i32 "+var_vec[i].second;
+                        }else{
+                             emit_str+=convert_to_llvm_type(var_vec[i].first)+ " "+var_vec[i].second;
+                        }                            
                         if(i<var_vec.size()-1) emit_str+=" ,";   
                     }
                 }
