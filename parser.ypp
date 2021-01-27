@@ -194,6 +194,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  }
 		  | ID ASSIGN Exp SC	
 		  {
+		     
 		       string id_type = vars_table->checkVariableDeclared($1->name);
 		       if(id_type == ""){
                     output::errorUndef(yylineno, $1->name);
@@ -203,18 +204,21 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                     output::errorMismatch(yylineno);
                     exit(0);
                }
+
 			   if($1->getType() == "BOOL"){
                    string value = phi(dynamic_cast<Exp*>$4);
                    storeVariable(value, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
                }
                else{
-                   storeVariable(dynamic_cast<Exp*>$4->reg, $1->type, vars_table->varGetOffset($2->name), curr_func_args.size());
+                   storeVariable(dynamic_cast<Exp*>$3->reg, $1->type, vars_table->varGetOffset($1->name), curr_func_args.size());
+
                }
                $$ = new Statement();
 		  }	
 		  | Call SC
 		  {
 		      $$ = new Statement();
+
 		  }
 		  | RETURN SC	
 		  {
@@ -245,11 +249,9 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  | IF LPAREN ExpBool RPAREN M Statement
 		  {
 		      $$ = new Statement();
-              printf("if 1\n");
 		      vars_table->closeScope();
-              printf("if 2\n");
 		      llvmIfStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6, dynamic_cast<Statement*>$5->label);
-              printf("if 3\n");
+
 		  }
 		  | IF LPAREN ExpBool RPAREN M Statement ELSE {  vars_table->closeScope(); vars_table->openScope();} N M Statement
 		  {
@@ -264,15 +266,10 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  | WHILE LPAREN Q Exp RPAREN {vars_table->openScope(); while_mode = true; } M Statement
 		  {
 		      $$ = new Statement();
-              printf("while 1\n");
 		      vars_table->closeScope();
-              printf("while 2\n");
 		      while_mode = false;
-              printf("while 3\n");
 		      continue_label = dynamic_cast<Statement*>$3->label;
-              printf("while 4\n");
 		      llvmWhileStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$4, dynamic_cast<Statement*>$8, dynamic_cast<Statement*>$7->label, dynamic_cast<Statement*>$3->label);
-		      printf("while 5\n");
           }
 		  | BREAK SC
 		  {
@@ -312,7 +309,7 @@ ExpBool: Exp{
 
 Call:      ID LPAREN Explist RPAREN
           {
-          printf("calling \n");
+
               
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
@@ -529,7 +526,7 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | Exp ADDSUB Exp       //todo add the set related cases
 		  {
-           
+
                 if((($1->type != "INT") &&($1->type != "BYTE") &&($1->type != "SET"))  || (($3->type != "INT") &&($3->type != "BYTE") &&($3->type != "SET"))){
                     output::errorMismatch(yylineno);
                     exit(0);
@@ -553,9 +550,8 @@ Exp:        LPAREN Exp RPAREN//Done
 
                // string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 string exp_reg=llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
-                printf("5\n");
                 dynamic_cast<Exp*>$$->reg =exp_reg;
-                printf("6\n");
+
 		  }
           | Exp MULDIV Exp       //todo: need to add SET to binop
 		  {

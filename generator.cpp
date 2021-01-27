@@ -173,15 +173,10 @@ void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string brea
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
     string reg=freshVar();
-    printf("relop 1\n");
     buffer.emit("%" + reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
-    printf("relop 2\n");
     int line= buffer.emit("br i1 %" + reg + ", label @, label @");
-    printf("relop 3\n");
     addToFalseList(result, make_pair(line, SECOND));
-    printf("relop 4\n");
     addToTrueList(result, make_pair(line, FIRST));
-    printf("relop 5\n");
 
 }
 
@@ -199,10 +194,9 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
         if(isByte)  op="udiv";
         
     }
-    printf("1\n");
+
     reg=freshVar();
     buffer.emit(reg+" = "+op+" i32 "+exp1->reg+", "+exp2->reg);
-    printf("2\n");
      string new_reg;
     if (isByte) //on exp is byte
     {
@@ -210,12 +204,9 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
         string prev_reg=reg;
         new_reg=freshVar();
         buffer.emit(new_reg+" = trunc i32 "+prev_reg+" to i8");
-        printf("3\n");
 		prev_reg=new_reg;
         new_reg=freshVar();
 		buffer.emit(new_reg+"=zext i8 "+prev_reg+" to i32");
-        printf("4\n");
-
     }
     if(isByte) return new_reg;
     return reg;
