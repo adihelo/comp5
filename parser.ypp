@@ -88,7 +88,7 @@ Funcs :
 		  
 FuncDecl: RetType ID LPAREN Formals RPAREN
           {
-              
+
               funcs_table->Insert($2->name, $1->getType(), curr_func_args);
               llvmFuncDecl($1->getType(), $2->name, curr_func_args);
               FuncDeclAllocation(curr_func_args.size());
