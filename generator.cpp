@@ -153,7 +153,7 @@ void llvmIfElseStmt(Statement* statement, Exp* cond, Statement* inst_true, State
     
     statement->nextlist = buffer.merge(inst_true->nextlist, buffer.merge(marker->nextlist, inst_false->nextlist));
     printf("3\n");
-      statement->breaklist = buffer.merge(inst_true->breaklist, inst_false->breaklist);//NEW
+     // statement->breaklist = buffer.merge(inst_true->breaklist, inst_false->breaklist);//NEW
    string if_else_end_label = buffer.genLabel();
     printf("4\n");
     buffer.bpatch(statement->nextlist, if_else_end_label);
