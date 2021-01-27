@@ -307,7 +307,12 @@ Call:      ID LPAREN Explist RPAREN
               string name =  dynamic_cast<Identifier*>$1->name;
               string func_type = funcs_table->checkArgsValid( dynamic_cast<Identifier*>$1->name,curr_explist);
               string res_reg=call_emit(func_type, name, curr_explist); 
+              if(res_reg!="no reg"){
               $$=new Call(func_type,res_reg);
+              }else{
+               $$=new Call(func_type);
+              
+              }
 			  curr_explist.clear();
               
 		  }

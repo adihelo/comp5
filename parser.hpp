@@ -122,6 +122,10 @@ public:
         type = value;
         this->reg=reg;
     }
+    explicit Call(string value){
+        type = value;
+      
+    }
 };
 #define YYSTYPE Node*
 
