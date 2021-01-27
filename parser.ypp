@@ -68,8 +68,8 @@
 
 Program:  Funcs
           {
-              output::endScope();
-			  funcs_table->printTable();
+              //output::endScope();
+			  //funcs_table->printTable();
 
 		  }
 		  
@@ -242,7 +242,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		  }
 		  | IF LPAREN ExpBool RPAREN M Statement
 		  {
-		      std::cout << "okkkk for if" <<std::endl;
+		      //std::cout << "okkkk for if" <<std::endl;
 		      $$ = new Statement();
 		      vars_table->closeScope();
 		      llvmIfStmt(dynamic_cast<Statement*>$$, dynamic_cast<Exp*>$3, dynamic_cast<Statement*>$6, dynamic_cast<Statement*>$5->label);
@@ -442,12 +442,13 @@ Exp:        LPAREN Exp RPAREN//Done
 		  {
                 $$= new Exp("STRING");
                 string str=(dynamic_cast<String*>$1)->getValue(); 
-                str+='\00';
+                // str+='\00';
                 int str_size = dynamic_cast<String*>$1->getSize(); 
                 lastStringSize=str_size;
                 //dynamic_cast<Exp>$$->reg=freshVar();
-               // lastStringReg=freshVar();
-                buffer.emitGlobal("@string"+to_string(lastStringReg++)+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\""); 
+                // lastStringReg=freshVar();
+               str= str.substr(1, str.size() - 2);
+               buffer.emitGlobal("@string"+to_string(lastStringReg++)+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\\0A\\00\"\n"""); 
               
 		  }
           | TRUE //DONE
@@ -491,6 +492,7 @@ Exp:        LPAREN Exp RPAREN//Done
           } Exp 
 		  {
                 if(($1->type != "BOOL") || ($4->type != "BOOL")){
+                
                     output::errorMismatch(yylineno);
                     exit(0);
                 }
@@ -508,7 +510,8 @@ Exp:        LPAREN Exp RPAREN//Done
 
 
             } Exp{
-                    if(($1->type != "BOOL") || ($3->type != "BOOL")){
+                    if(($1->type != "BOOL") || ($4->type != "BOOL")){
+                    //printf("here\n");
                     output::errorMismatch(yylineno);
                     exit(0);
                     }
