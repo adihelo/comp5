@@ -228,9 +228,9 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                         emit_str+="i32 "+var_vec[i].second;                 
                         if(i<var_vec.size()-1) emit_str+=" ,";   
                     }
-                }else{
-                   emit_str+=")";
                 }
+                   emit_str+=")";
+                
                 buffer.emit(emit_str);
            }
         return call_res_reg;
