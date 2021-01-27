@@ -173,8 +173,8 @@ void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string brea
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
     string reg=freshVar();
-    buffer.emit("%" + reg + " = icmp "+binop+" i32 %"+exp1->reg+", %"+exp1->reg);
-    int line= buffer.emit("br i1 %" + reg + ", label @, label @");
+    buffer.emit( reg + " = icmp "+binop+" i32 "+exp1->reg+", "+exp1->reg);
+    int line= buffer.emit("br i1 " + reg + ", label @, label @");
     addToFalseList(result, make_pair(line, SECOND));
     addToTrueList(result, make_pair(line, FIRST));
 
@@ -185,7 +185,7 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
     string reg=freshVar();
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
         buffer.emit(reg+" = icmp eq i32 0, "+exp2->reg);
-        int line=buffer.emit("br i1 %" + reg + ", label @, label @");
+        int line=buffer.emit("br i1 " + reg + ", label @, label @");
         buffer.bpatch(buffer.makelist(make_pair(line,FIRST)),buffer.genLabel());
         buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
