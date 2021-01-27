@@ -89,6 +89,7 @@ Funcs :
 FuncDecl: RetType ID LPAREN Formals RPAREN
           {
 
+
               funcs_table->Insert($2->name, $1->getType(), curr_func_args);
               llvmFuncDecl($1->getType(), $2->name, curr_func_args);
               FuncDeclAllocation(curr_func_args.size());
@@ -105,13 +106,12 @@ FuncDecl: RetType ID LPAREN Formals RPAREN
 		      }
 		      curr_func_args.clear();
 		      emitCommand("\n}\n");
-
 		  }
 
 RetType:  Type
           {
 			 $$->type = $1->type;
-             
+
 		  }
 		  | VOID
 		  {
@@ -131,7 +131,7 @@ Formals:
 
 FormalsList:FormalDecl 
 		  {
-		      
+
 		  }
 		  | FormalDecl COMMA FormalsList
 		  {
@@ -359,6 +359,7 @@ Type :      INT
           |  BYTE
 		  {
 			$$= $1;
+
 		  }
           | BOOL
 		  {
@@ -487,13 +488,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
 			  
 		  }
-          | Exp AND{
-            
-                string true_label=buffer.genLabel(); 
-                buffer.bpatch( dynamic_cast<Exp*>$1->trueList, true_label);
-          
-          
-          } Exp 
+          | Exp AND M Exp
 		  {
                 if(($1->type != "BOOL") || ($4->type != "BOOL")){
                 
@@ -503,26 +498,21 @@ Exp:        LPAREN Exp RPAREN//Done
        
                 $$ = new Exp("BOOL");
                 dynamic_cast<Exp*>$$->reg=freshVar();
-                dynamic_cast<Exp*>$$->falseList=buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falseList);//falseList of $$ is both falselists of $1 and $4
-                dynamic_cast<Exp*>$$->trueList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
-
-            
+                buffer.bpatch(dynamic_cast<Exp*>$1->trueList, dynamic_cast<Statement*>$3->label);
+                dynamic_cast<Exp*>$$->trueList = dynamic_cast<Exp*>$4->trueList;
+                dynamic_cast<Exp*>$$->falseList = buffer.merge(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Exp*>$4->falseList);
 		  }
-          | Exp OR {     // the opposite of AND
-                string false_label=buffer.genLabel(); 
-                buffer.bpatch( dynamic_cast<Exp*>$1->falseList, false_label);
-
-
-            } Exp{
+          | Exp OR M Exp{
                     if(($1->type != "BOOL") || ($4->type != "BOOL")){
                     //printf("here\n");
                     output::errorMismatch(yylineno);
                     exit(0);
                     }
                     $$ = new Exp("BOOL");
-                     dynamic_cast<Exp*>$$->reg=freshVar();
-                    dynamic_cast<Exp*>$$->trueList=buffer.merge(dynamic_cast<Exp*>$1->trueList, dynamic_cast<Exp*>$4->trueList);//falseList of $$ is both falselists of $1 and $4
-                    dynamic_cast<Exp*>$$->falseList=dynamic_cast<Exp*>$4->trueList; //true list is the true list of $4
+                    dynamic_cast<Exp*>$$->reg=freshVar();
+                    buffer.bpatch(dynamic_cast<Exp*>$1->falseList, dynamic_cast<Statement*>$3->label);
+                    dynamic_cast<Exp*>$$->trueList = buffer.merge(dynamic_cast<Exp*>$1->trueList, dynamic_cast<Exp*>$4->trueList);
+                    dynamic_cast<Exp*>$$->falseList = dynamic_cast<Exp*>$4->falseList;
 		  }
           | Exp ADDSUB Exp       //todo add the set related cases
 		  {
@@ -626,7 +616,7 @@ N : {
 
 int main(){
 	// init the codeBuffer
-	buffer.emitGlobal("declare i32 @printf(i8*, ...)\n");
+	buffer.emitGlobal("declare i32 @printf(i8*, ...)");
     buffer.emitGlobal("declare void @exit(i32)\n");
     buffer.emitGlobal("@.int_specifier = constant [4 x i8] c\"\%d\\0A\\00\"\n");
     buffer.emitGlobal("@.str_specifier = constant [4 x i8] c\"\%s\\0A\\00\"\n");
