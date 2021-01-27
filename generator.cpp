@@ -218,7 +218,7 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                int reg=lastStringReg-1;
                int size=lastStringSize;
                 buffer.emit("call void @print(i8* getelementptr (["+to_string(size)+" x i8], ["+to_string(size)+" x i8]* @string"+to_string(reg)+", i64 0, i64 0))"); 
-               
+               return "no reg";
            }else{
                 if(func_type=="VOID"){
                     emit_str="call void";
