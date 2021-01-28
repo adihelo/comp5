@@ -87,7 +87,7 @@ void FuncDeclAllocation(int argsNum){
 void storeFuncArg(const string& type, int offset, int argsNumber){
     string variable = freshVar();
     buffer.emit("   " + variable + " = getelementptr [" + to_string(argsNumber) + " x i32], [" + to_string(argsNumber) + " x i32]* %params, i32 0, i32 " + to_string(offset));
-    string off_reg ="%" + to_string(offset);
+    string off_reg ="%" + to_string(argsNumber-offset-1);
     zext(off_reg, convert_to_llvm_type(type));
     buffer.emit("   store i32 " + off_reg + ", i32* " + variable);
 
@@ -105,8 +105,8 @@ void storeVariable(string value, const string& type, int offset, const int& args
         buffer.emit("   " + var_ptr + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset) );
         buffer.emit("   store i32 " + value + ", i32* " + var_ptr);
     } else {
-        offset++;
-        buffer.emit("   " + var_ptr + " = getelementptr [" + to_string(argsNum)+ " x i32], [" + to_string(argsNum)+ " x i32]* %params, i32 0, i32 " + to_string(-offset));
+        //offset++;
+        buffer.emit("   " + var_ptr + " = getelementptr [" + to_string(argsNum)+ " x i32], [" + to_string(argsNum)+ " x i32]* %params, i32 0, i32 " + to_string(argsNum+offset));
         buffer.emit("   store i32 " + value + ", i32* " + var_ptr);
     }
 }
@@ -249,14 +249,14 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                 }
                 emit_str+=" @"+func_name+"(";
                 if(!var_vec.empty()){
-                    for (int i=0; i<var_vec.size(); i++){
+                    for (int i=var_vec.size()-1; i>=0; i--){
                         
                         if(var_vec[i].first == "BYTE" || var_vec[i].first=="INT"){
                             emit_str+="i32 "+var_vec[i].second;
                         }else{
                              emit_str+=convert_to_llvm_type(var_vec[i].first)+ " "+var_vec[i].second;
                         }                            
-                        if(i<var_vec.size()-1) emit_str+=" ,";   
+                        if(i>0) emit_str+=" ,";
                     }
                 }
                    emit_str+=")";
@@ -265,14 +265,19 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
            }
         return call_res_reg;
     }
-string emit_id(int offset)
+string emit_id(int offset, int argsSize)
 	{
-        string reg1=freshVar();
-        buffer.emit(reg1+ " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
-        string reg2=freshVar();
-        buffer.emit(reg2+" = load i32, i32* "+reg1);
+        string reg1 = freshVar();
+        string reg2 = freshVar();
+        if (offset >= 0) {
+            buffer.emit(reg1 + " = getelementptr [50 x i32], [50 x i32]* %locals, i32 0, i32 " + to_string(offset));
+            buffer.emit(reg2 + " = load i32, i32* " + reg1);
+        } else{
+
+            buffer.emit(reg1 + " = getelementptr [" + to_string(argsSize) + "x i32], [" + to_string(argsSize) + "x i32]* %params, i32 0, i32 " + to_string(argsSize+offset));
+            buffer.emit(reg2 + " = load i32, i32* " + reg1);
+        }
         return reg2;
-					
 	}  
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
     exp->falseList=CodeBuffer::merge(exp->falseList,CodeBuffer::makelist(branch));

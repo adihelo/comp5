@@ -93,7 +93,7 @@ FuncDecl: RetType ID LPAREN Formals RPAREN
               funcs_table->Insert($2->name, $1->getType(), curr_func_args);
               llvmFuncDecl($1->getType(), $2->name, curr_func_args);
               FuncDeclAllocation(curr_func_args.size());
-              for (int i = curr_func_args.size()-1 ; i >=0 ; i--){
+              for (int i = 0 ; i < curr_func_args.size() ; i++){
                   storeFuncArg(curr_func_args[i], i, curr_func_args.size());
               }
 
@@ -399,7 +399,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }
                 //emit id from table
                 
-                  string exp_reg=emit_id(vars_table->varGetOffset(dynamic_cast<Identifier*>$1->name));
+                  string exp_reg = emit_id(vars_table->varGetOffset(dynamic_cast<Identifier*>$1->name), curr_func_args.size());
                 
                 $$= new Exp(type);
                 dynamic_cast<Exp*>$$->reg=exp_reg;
