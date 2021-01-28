@@ -178,7 +178,7 @@ void llvmWhileStmt(Statement* statement, Exp* cond, Statement* inst, string brea
 
 void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
     string reg=freshVar();
-    buffer.emit( reg + " = icmp "+binop+" i32 "+exp1->reg+", "+exp1->reg);
+    buffer.emit( reg + " = icmp "+binop+" i32 "+exp1->reg+", "+exp2->reg);
     int line= buffer.emit("br i1 " + reg + ", label @, label @");
     addToFalseList(result, make_pair(line, SECOND));
     addToTrueList(result, make_pair(line, FIRST));

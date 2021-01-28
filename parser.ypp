@@ -264,7 +264,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		      dynamic_cast<Statement*>$10->label);
 
 		  }
-		  | WHILE LPAREN Q Exp RPAREN {vars_table->openScope(); while_mode = true; } M Statement
+		  | WHILE LPAREN M Exp RPAREN {vars_table->openScope(); while_mode = true; } M Statement
 		  {
 		      $$ = new Statement();
 		      vars_table->closeScope();
@@ -616,8 +616,13 @@ Exp:        LPAREN Exp RPAREN//Done
                //  dynamic_cast<Exp*>$$=freshVar();
 		  }
 
-M : { $$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
-Q : { $$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
+M : {
+       $$ = new Statement();
+       dynamic_cast<Statement*>$$->label = buffer.getLabelName();
+       buffer.emit("br label %" +   dynamic_cast<Statement*>$$->label);
+       buffer.emit(dynamic_cast<Statement*>$$->label + ":");
+       }
+//Q : { $$ = new Statement(); dynamic_cast<Statement*>$$->label = string(buffer.genLabel()); }
 N : {
       $$ = new Statement();
       int address = buffer.emit("   br label @");
