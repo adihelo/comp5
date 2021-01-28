@@ -23,8 +23,11 @@ void emitCommand(const string& command){
 
 void zext(string& reg_to_zext, const string& type){
     if (type == "i1" || type == "i8"){
+        string prev_reg=reg_to_zext;
+        string trunc_reg=freshVar();
+        buffer.emit(trunc_reg+" = trunc i32 "+prev_reg+" to i8");
         string zexted_reg = freshVar();
-        string zext_command = "  " + zexted_reg + " = zext " + type + " " + reg_to_zext + " to i32";
+        string zext_command = "  " + zexted_reg + " = zext " + type + " " + trunc_reg + " to i32";
         emitCommand(zext_command);
         reg_to_zext = zexted_reg;
     }
@@ -126,8 +129,10 @@ string phi(Exp* exp){
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes){
 
     string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
-    for (const auto & argType : argTypes) {
-        define_command += convert_to_llvm_type(argType) + ",";
+    for (const auto & argType : argTypes) { 
+        string type = convert_to_llvm_type(argType);
+        if(argType == "BYTE") type="i32"; 
+        define_command += type + ",";
     }
     if(argTypes.size()) {
         define_command.pop_back();

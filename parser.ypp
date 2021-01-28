@@ -243,7 +243,9 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
                   zext(dynamic_cast<Exp*>$2->reg, convert_to_llvm_type($2->type));
               }
               buffer.emit("   ret " +  convert_to_llvm_type($2->type) + " " + dynamic_cast<Exp*>$2->reg);
+              
               $$ = new Statement();
+            
 		  }
 		  | IF LPAREN ExpBool RPAREN M Statement
 		  {
