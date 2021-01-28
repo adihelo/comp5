@@ -200,7 +200,7 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
         buffer.emit(reg+" = icmp eq i32 0, "+exp2->reg);
         int line=buffer.emit("br i1 " + reg + ", label @, label @");
         buffer.bpatch(buffer.makelist(make_pair(line,FIRST)),buffer.genLabel());
-        buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @error, i64 0, i64 0))");
+        buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @.divByZeroErrorCode, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
         int end=buffer.emit("br label @");
         buffer.bpatch(buffer.merge(buffer.makelist(make_pair(line,SECOND)),buffer.makelist(make_pair(end,FIRST))),buffer.genLabel());
