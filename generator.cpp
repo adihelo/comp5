@@ -22,12 +22,20 @@ void emitCommand(const string& command){
 
 
 void zext(string& reg_to_zext, const string& type){
-    if (type == "i1" || type == "i8"){
+    if ( type == "i8"){
         string prev_reg=reg_to_zext;
         string trunc_reg=freshVar();
         buffer.emit(trunc_reg+" = trunc i32 "+prev_reg+" to i8");
         string zexted_reg = freshVar();
         string zext_command = "  " + zexted_reg + " = zext " + type + " " + trunc_reg + " to i32";
+        emitCommand(zext_command);
+        reg_to_zext = zexted_reg;
+        
+    } 
+    if ( type == "i1"){
+
+        string zexted_reg = freshVar();
+        string zext_command = "  " + zexted_reg + " = zext " + type + " " + reg_to_zext + " to i32";
         emitCommand(zext_command);
         reg_to_zext = zexted_reg;
     }
