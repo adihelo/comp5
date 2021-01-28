@@ -137,9 +137,10 @@ string phi(Exp* exp){
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes){
 
     string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
-    for (const auto & argType : argTypes) { 
-        string type = convert_to_llvm_type(argType);
-        if(argType == "BYTE") type="i32"; 
+    for (int i = argTypes.size()-1 ; i >= 0 ; --i) {
+
+        string type = convert_to_llvm_type(argTypes[i]);
+        if(argTypes[i] == "BYTE") type="i32";
         define_command += type + ",";
     }
     if(argTypes.size()) {
