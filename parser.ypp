@@ -235,14 +235,15 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
               	  output::errorMismatch(yylineno);
               	  exit(0);
               }
-              if ($2->type == "bool"){
+              if ($2->type == "BOOL"){
                   dynamic_cast<Exp*>$2->reg = phi(dynamic_cast<Exp*>$2);
               }
 
               if (funcs_table->lastFuncType() != $2->type){
                   zext(dynamic_cast<Exp*>$2->reg, convert_to_llvm_type($2->type));
               }
-              buffer.emit("   ret " +  convert_to_llvm_type($2->type) + " " + dynamic_cast<Exp*>$2->reg);
+              string ret_type = (convert_to_llvm_type($2->type) == "i8" ) ? "i32" : convert_to_llvm_type($2->type);
+              buffer.emit("   ret " +  ret_type + " " + dynamic_cast<Exp*>$2->reg);
               
               $$ = new Statement();
             

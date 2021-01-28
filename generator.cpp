@@ -135,8 +135,9 @@ string phi(Exp* exp){
 }
 
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes){
-
-    string define_command = "define " + convert_to_llvm_type(retType) + " @" + funcName + "(";
+    
+    string ret_type = (convert_to_llvm_type(retType) == "i8" )? "i32" : convert_to_llvm_type(retType);
+    string define_command = "define " + ret_type + " @" + funcName + "(";
     for (int i = argTypes.size()-1 ; i >= 0 ; --i) {
 
         string type = convert_to_llvm_type(argTypes[i]);
@@ -242,12 +243,14 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                     emit_str="call void";
                 }else{
                     call_res_reg = freshVar();
-                    emit_str=call_res_reg+" = call " + convert_to_llvm_type(func_type);
+                    string ret_type = (convert_to_llvm_type(func_type) == "i8") ? "i32" : convert_to_llvm_type(func_type);
+                    emit_str=call_res_reg+" = call " + ret_type;
                
                 }
                 emit_str+=" @"+func_name+"(";
                 if(!var_vec.empty()){
                     for (int i=0; i<var_vec.size(); i++){
+                        
                         if(var_vec[i].first == "BYTE" || var_vec[i].first=="INT"){
                             emit_str+="i32 "+var_vec[i].second;
                         }else{
