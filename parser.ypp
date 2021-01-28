@@ -460,11 +460,12 @@ Exp:        LPAREN Exp RPAREN//Done
                 string str=(dynamic_cast<String*>$1)->getValue(); 
                 // str+='\00';
                 int str_size = dynamic_cast<String*>$1->getSize(); 
-                lastStringSize=str_size;
+                lastStringSize=str_size-1;
                 //dynamic_cast<Exp>$$->reg=freshVar();
                 // lastStringReg=freshVar();
                str= str.substr(1, str.size() - 2);
-               buffer.emitGlobal("@string"+to_string(lastStringReg++)+" = constant ["+to_string(str_size)+" x i8] c\""+str+"\\0A\\00\"""");
+               str+="\\00";
+               buffer.emitGlobal("@string"+to_string(lastStringReg++)+" = constant ["+to_string(str_size-1)+" x i8] c\""+str+"\"");
               
 		  }
           | TRUE //DONE
