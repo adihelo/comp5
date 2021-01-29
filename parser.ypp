@@ -103,7 +103,9 @@ FuncDecl: RetType ID LPAREN Formals RPAREN
 		      if($1->getType() == "VOID"){
 
 		          buffer.emit("   ret void");
-		      }
+		      }else{
+                buffer.emit("ret i32 0");
+                }
 		      curr_func_args.clear();
 		      emitCommand("\n}\n");
 		  }
@@ -236,14 +238,14 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
               	  exit(0);
               }
               if ($2->type == "BOOL"){
-                  dynamic_cast<Exp*>$2->reg = phi(dynamic_cast<Exp*>$2);
+                  dynamic_cast<Exp*>$2->reg = llvmExpIsBool(dynamic_cast<Exp*>$2);
               }
 
               if (funcs_table->lastFuncType() != $2->type){
                   zext(dynamic_cast<Exp*>$2->reg, convert_to_llvm_type($2->type));
               }
               string ret_type = (convert_to_llvm_type($2->type) == "i8" ) ? "i32" : convert_to_llvm_type($2->type);
-              buffer.emit("   ret " +  ret_type + " " + dynamic_cast<Exp*>$2->reg);
+              buffer.emit("   ret i32 "  + dynamic_cast<Exp*>$2->reg);
               
               $$ = new Statement();
             
@@ -412,8 +414,10 @@ Exp:        LPAREN Exp RPAREN//Done
                     string reg2=freshVar();
                     buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
                     int line = buffer.emit("br i1 "+reg2+", label @, label @");
-                    addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
-                    addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
+                    /*addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
+                    addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));*/
+                     dynamic_cast<Exp*>$$->falseList=buffer.makelist(make_pair(line,SECOND));
+                    dynamic_cast<Exp*>$$->trueList=buffer.makelist(make_pair(line,FIRST));
                 }
 		  }
           | Call //DONE
@@ -428,8 +432,12 @@ Exp:        LPAREN Exp RPAREN//Done
                     string reg2=freshVar();
                     buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
                     int line = buffer.emit("br i1 "+reg2+", label @, label @");
+                    dynamic_cast<Exp*>$$->falseList=buffer.makelist(make_pair(line,SECOND));
+                    dynamic_cast<Exp*>$$->trueList=buffer.makelist(make_pair(line,FIRST));
+                   /*
                     addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
                     addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
+                    */
                 }
            
 		  }
@@ -476,8 +484,8 @@ Exp:        LPAREN Exp RPAREN//Done
                 //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,1");
 
                 int line=buffer.emit("br label @");
-                addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
-
+                //addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
+                    dynamic_cast<Exp*>$$->trueList=buffer.makelist(make_pair(line,FIRST));
 		  }
           | FALSE //DONE
 		  {
@@ -485,8 +493,8 @@ Exp:        LPAREN Exp RPAREN//Done
               //buffer.emit("%" + dynamic_cast<Exp*>$$->reg + " = add i1 0,0");
 
               int line=buffer.emit("br label @");
-              addToFalseList(dynamic_cast<Exp*>$$, make_pair(line,FIRST));
-
+             // addToFalseList(dynamic_cast<Exp*>$$, make_pair(line,FIRST));
+                dynamic_cast<Exp*>$$->falseList=buffer.makelist(make_pair(line,SECOND));
 		  }
           | NOT Exp
 		  {
@@ -534,7 +542,6 @@ Exp:        LPAREN Exp RPAREN//Done
                     output::errorMismatch(yylineno);
                     exit(0);
                 }
-                bool byteFlag=false;
                 if(($1->type == "SET") ||($3->type == "SET")){
                     $$= new Exp("SET");
                 }
@@ -542,7 +549,7 @@ Exp:        LPAREN Exp RPAREN//Done
                     $$= new Exp("INT");
                 }else if($1->type == "BYTE" || $3->type == "BYTE"){
                     $$ = new Exp("BYTE");
-                    byteFlag=true;
+                    
                 }
                 /*else{
                  
@@ -550,7 +557,7 @@ Exp:        LPAREN Exp RPAREN//Done
                 }*/
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 //$$= new Exp(dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,$2->value,byteFlag);
-
+                bool byteFlag = (dynamic_cast<Exp*>$$->type=="BYTE") ? true:false;
                // string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 string exp_reg=llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
                 dynamic_cast<Exp*>$$->reg =exp_reg;
@@ -558,19 +565,21 @@ Exp:        LPAREN Exp RPAREN//Done
 		  }
           | Exp MULDIV Exp       //todo: need to add SET to binop
 		  {
+                
                 if((($1->type != "INT") &&($1->type != "BYTE"))  || (($3->type != "INT") &&($3->type != "BYTE"))){
                     output::errorMismatch(yylineno);
                     exit(0);
                 }
-                bool byteFlag=false;
+                
                 if(($1->type == "INT") ||($2->type == "INT")){
                 
                     $$= new Exp("INT");
                 }else{
                         $$= new Exp("BYTE");
-                        byteFlag=true;
+                        
                 }
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
+                bool byteFlag = (dynamic_cast<Exp*>$$->type=="BYTE") ? true:false;
                 string exp_reg = llvmExpBinOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op,byteFlag);
                  dynamic_cast<Exp*>$$->reg = exp_reg;
 		  }
@@ -590,7 +599,6 @@ Exp:        LPAREN Exp RPAREN//Done
                     exit(0);
                 }
                 $$= new Exp("INT"); 
-                (dynamic_cast<Exp*>$$)->reg=(dynamic_cast<Exp*>$4)->reg;  //when casting the reg is the same as the casted exp?
 			 
 		  }
 		  | Exp RELOPL Exp //DONE
@@ -603,7 +611,6 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
-                // dynamic_cast<Exp*>$$=freshVar();
             
 
 		  }| Exp RELOPR Exp //
@@ -615,7 +622,6 @@ Exp:        LPAREN Exp RPAREN//Done
                 $$= new Exp("BOOL");
                 string op = llvmOpCommand((dynamic_cast<Identifier*>$2)->name);
                 llvmExpRelOp(dynamic_cast<Exp*>$$, dynamic_cast<Exp*>$1,dynamic_cast<Exp*>$3,op);
-               //  dynamic_cast<Exp*>$$=freshVar();
 		  }
 
 M : {

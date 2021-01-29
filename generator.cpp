@@ -34,8 +34,12 @@ void zext(string& reg_to_zext, const string& type){
     } 
     if ( type == "i1"){
 
+       // string zexted_reg = freshVar();
+         string prev_reg=reg_to_zext;
+        string trunc_reg=freshVar();
+        buffer.emit(trunc_reg+" = trunc i32 "+prev_reg+" to i1");
         string zexted_reg = freshVar();
-        string zext_command = "  " + zexted_reg + " = zext " + type + " " + reg_to_zext + " to i32";
+        string zext_command = "  " + zexted_reg + " = zext i1 " + trunc_reg + " to i32";
         emitCommand(zext_command);
         reg_to_zext = zexted_reg;
     }
@@ -98,7 +102,7 @@ void storeVariable(string value, const string& type, int offset, const int& args
     zext(value,convert_to_llvm_type(type));
     if(value=="0") {
         value=freshVar();
-        buffer.emit("   " + value + " = add " + convert_to_llvm_type(type)+" 0, 0");
+        buffer.emit("   " + value + " = add " + "i32" +" 0, 0");
     }
     string var_ptr = freshVar();
     if (offset >= 0) {
@@ -136,12 +140,12 @@ string phi(Exp* exp){
 
 void llvmFuncDecl(string retType, const string& funcName, vector<string>& argTypes){
     
-    string ret_type = (convert_to_llvm_type(retType) == "i8" )? "i32" : convert_to_llvm_type(retType);
+    string ret_type = ((convert_to_llvm_type(retType) == "i8" )||(convert_to_llvm_type(retType) == "i1"))? "i32" : convert_to_llvm_type(retType);
     string define_command = "define " + ret_type + " @" + funcName + "(";
     for (int i = argTypes.size()-1 ; i >= 0 ; --i) {
 
         string type = convert_to_llvm_type(argTypes[i]);
-        if(argTypes[i] == "BYTE") type="i32";
+        if(argTypes[i] == "BYTE" ||argTypes[i] == "BOOL" ) type="i32";
         define_command += type + ",";
     }
     if(argTypes.size()) {
@@ -190,8 +194,10 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
     string reg=freshVar();
     buffer.emit( reg + " = icmp "+binop+" i32 "+exp1->reg+", "+exp2->reg);
     int line= buffer.emit("br i1 " + reg + ", label @, label @");
-    addToFalseList(result, make_pair(line, SECOND));
-    addToTrueList(result, make_pair(line, FIRST));
+     result->falseList=buffer.makelist(make_pair(line,SECOND));
+    result->trueList=buffer.makelist(make_pair(line,FIRST));
+    /*addToFalseList(result, make_pair(line, SECOND));
+    addToTrueList(result, make_pair(line, FIRST));*/
 
 }
 
@@ -205,7 +211,9 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
         buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @.divByZeroErrorCode, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
         int end=buffer.emit("br label @");
-        buffer.bpatch(buffer.merge(buffer.makelist(make_pair(line,SECOND)),buffer.makelist(make_pair(end,FIRST))),buffer.genLabel());
+        vector<pair<int,BranchLabelIndex>> list = buffer.merge(buffer.makelist(make_pair(line,SECOND)),buffer.makelist(make_pair(end,FIRST)));
+        string label = buffer.genLabel();
+        buffer.bpatch(list,label);
         if(isByte)  op="udiv";
         
     }
@@ -244,14 +252,14 @@ string call_emit(const string& func_type, const string& func_name, vector<pair<s
                 }else{
                     call_res_reg = freshVar();
                     string ret_type = (convert_to_llvm_type(func_type) == "i8") ? "i32" : convert_to_llvm_type(func_type);
-                    emit_str=call_res_reg+" = call " + ret_type;
+                    emit_str=call_res_reg+" = call i32";
                
                 }
                 emit_str+=" @"+func_name+"(";
                 if(!var_vec.empty()){
                     for (int i=var_vec.size()-1; i>=0; i--){
                         
-                        if(var_vec[i].first == "BYTE" || var_vec[i].first=="INT"){
+                        if(var_vec[i].first == "BYTE" || var_vec[i].first=="INT"||var_vec[i].first=="BOOL"){
                             emit_str+="i32 "+var_vec[i].second;
                         }else{
                              emit_str+=convert_to_llvm_type(var_vec[i].first)+ " "+var_vec[i].second;
@@ -280,28 +288,31 @@ string emit_id(int offset, int argsSize)
         return reg2;
 	}  
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch){
-    exp->falseList=CodeBuffer::merge(exp->falseList,CodeBuffer::makelist(branch));
+    exp->falseList=buffer.merge(exp->falseList,buffer.makelist(branch));
 
 
 }
 void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch){
-    exp->trueList=CodeBuffer::merge(exp->trueList,CodeBuffer::makelist(branch));
+    exp->trueList=buffer.merge(exp->trueList,buffer.makelist(branch));
 
 }
 
 string llvmExpIsBool(Exp* exp){
     string true_label=  buffer.genLabel();
     buffer.bpatch(exp->trueList, true_label); 
-    exp->trueList.clear();
+    
     int line =buffer.emit("br label @");
-    addToTrueList(exp,make_pair(line,FIRST));
+    exp->trueList=buffer.makelist(make_pair(line, FIRST));
+    
     string false_label=  buffer.genLabel();
     buffer.bpatch(exp->falseList, false_label); 
+    
     int line2 =buffer.emit("br label @");
     addToTrueList(exp,make_pair(line2,FIRST));
     buffer.bpatch(exp->trueList, buffer.genLabel());
+    
     string reg = freshVar();
-    buffer.emit(reg+" = phi i1 [1, %"+true_label+"], [0, %"+false_label+"]"); 
+    buffer.emit(reg+" = phi i32 [1, %"+true_label+"], [0, %"+false_label+"]"); 
     return reg;
 
 }
