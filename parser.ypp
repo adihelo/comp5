@@ -410,15 +410,14 @@ Exp:        LPAREN Exp RPAREN//Done
                  if (type=="BOOL") {
                  
                     string reg1=freshVar();
-                    buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
-                    string reg2=freshVar();
-                    buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
-                    int line = buffer.emit("br i1 "+reg2+", label @, label @");
-                    /*addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
-                    addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));*/
+                    buffer.emit(reg1+"=trunc i32 "+dynamic_cast<Exp*>$$->reg+" to i1");
+                  
+                    int line = buffer.emit("br i1 "+reg1+", label @, label @");
+                
                      dynamic_cast<Exp*>$$->falseList=buffer.makelist(make_pair(line,SECOND));
                     dynamic_cast<Exp*>$$->trueList=buffer.makelist(make_pair(line,FIRST));
                 }
+                
 		  }
           | Call //DONE
 		  {
@@ -428,17 +427,14 @@ Exp:        LPAREN Exp RPAREN//Done
                 if (dynamic_cast<Call*>$1->type=="BOOL") {
                  
                     string reg1=freshVar();
-                    buffer.emit(reg1+"=inttoptr i32 "+dynamic_cast<Exp*>$$->reg+" to i1*");
-                    string reg2=freshVar();
-                    buffer.emit(reg2+"=ptrtoint i1* "+reg1+" to i1");
-                    int line = buffer.emit("br i1 "+reg2+", label @, label @");
+                    buffer.emit(reg1+"=trunc i32 "+dynamic_cast<Exp*>$$->reg+" to i1");
+                 
+                    int line = buffer.emit("br i1 "+reg1+", label @, label @");
                     dynamic_cast<Exp*>$$->falseList=buffer.makelist(make_pair(line,SECOND));
                     dynamic_cast<Exp*>$$->trueList=buffer.makelist(make_pair(line,FIRST));
-                   /*
-                    addToFalseList(dynamic_cast<Exp*>$$,make_pair(line,SECOND));
-                    addToTrueList(dynamic_cast<Exp*>$$,make_pair(line,FIRST));
-                    */
+                  
                 }
+                
            
 		  }
           | NUM//DONE
