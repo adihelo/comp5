@@ -15,6 +15,20 @@ string freshVar() {
     reg += to_string(curr_reg++);
     return reg;
 }
+void set_code_gen(){
+    buffer.emitGlobal("@string0 = constant [30 x i8] c\"Error out of set range. Op: +\\00\"");
+    buffer.emit("%reg1 = add i32 1, 0");
+    buffer.emit("%reg2 = add i32 2, 0");
+    buffer.emit("%reg3 = add i32 3, 0");
+    buffer.emit("call void @printi(i32 %reg1)");
+    buffer.emit("call void @printi(i32 %reg2)");
+    buffer.emit("call void @printi(i32 %reg3)");
+    buffer.emit("call void @print(i8* getelementptr ([30 x i8], [30 x i8]* @string0, i64 0, i64 0))");
+    buffer.emit("ret void \n }");
+    buffer.printGlobalBuffer();
+    buffer.printCodeBuffer();
+    exit(0);
+}
 
 void emitCommand(const string& command){
     buffer.emit(command);
@@ -160,6 +174,7 @@ void llvmIfStmt(Statement* statement, Exp* cond, Statement* inst, string label){
 
     buffer.bpatch(cond->trueList, label);
     statement->nextlist = buffer.merge(cond->falseList, inst->nextlist);
+    statement->breaklist = inst->breaklist;
     string if_end_label = buffer.getLabelName();
     buffer.emit("br label %" + if_end_label);
     buffer.emit(if_end_label + ":");

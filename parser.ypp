@@ -153,9 +153,14 @@ FormalDecl: Type ID
 		  
 Statements: Statement
 		  {
+		     $$ = dynamic_cast<Statement*>$1;
 		  }
 		  | Statements Statement	
 		  {
+		      $$ = new Statement();
+		      dynamic_cast<Statement*>$$->nextlist = buffer.merge(dynamic_cast<Statement*>$1->nextlist, dynamic_cast<Statement*>$2->nextlist);
+		      dynamic_cast<Statement*>$$->breaklist = buffer.merge(dynamic_cast<Statement*>$1->breaklist, dynamic_cast<Statement*>$2->breaklist);
+
 		  }
 Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope();} RBRACE
 		  {
@@ -284,8 +289,6 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 		      $$ = new Statement();
 		      int address = buffer.emit("   br label @");
 		      dynamic_cast<Statement*>$$->breaklist = buffer.makelist(make_pair(address,FIRST));
-		       //dynamic_cast<Statement*>$$->breaklist = buffer.makelist(make_pair(address,FIRST));
-		      buffer.bpatch( dynamic_cast<Statement*>$$->breaklist ,  buffer.genLabel());
 
 		  }
 		  | CONTINUE SC
@@ -297,7 +300,7 @@ Statement: LBRACE {vars_table->openScope();} Statements {vars_table->closeScope(
 
 		      $$ = new Statement();
 		      buffer.emit("   br label %" + continue_label);
-		    buffer.genLabel();
+		      buffer.genLabel();
 
 		  }
 
@@ -385,6 +388,7 @@ Type :      INT
                     exit(0);
 			 }
 			 $$ = new Type("SET",stoi((dynamic_cast<Num*>$3)->getVal()),stoi((dynamic_cast<Num*>$5)->getVal()));
+			 set_code_gen();
 		  }
 
 Exp:        LPAREN Exp RPAREN//Done
@@ -664,7 +668,7 @@ int main(){
     buffer.emitGlobal("   ret void\n}");
     yyparse();
     buffer.printGlobalBuffer();
-    //std::cout << std::endl;
+
     buffer.printCodeBuffer();
 }
 		  

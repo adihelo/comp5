@@ -21,6 +21,7 @@ void storeVariable(string value, const string& type, int offset, const int& args
 void addToFalseList(Exp* exp, pair<int,BranchLabelIndex> branch);//done
 void addToTrueList(Exp* exp, pair<int,BranchLabelIndex> branch);
 string phi(Exp* exp);
+void set_code_gen();
 
 string call_emit(const string& func_type, const string& func_name, vector<pair<string,string>> var_vec);
 string emit_id(int offset, int argsSize);
