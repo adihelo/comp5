@@ -194,10 +194,10 @@ void llvmExpRelOp(Exp* result, Exp* exp1, Exp* exp2, const string& binop){
     string reg=freshVar();
     buffer.emit( reg + " = icmp "+binop+" i32 "+exp1->reg+", "+exp2->reg);
     int line= buffer.emit("br i1 " + reg + ", label @, label @");
-     result->falseList=buffer.makelist(make_pair(line,SECOND));
-    result->trueList=buffer.makelist(make_pair(line,FIRST));
-    /*addToFalseList(result, make_pair(line, SECOND));
-    addToTrueList(result, make_pair(line, FIRST));*/
+    result->falseList=buffer.makelist(make_pair(line,SECOND));
+      
+   result->trueList=buffer.makelist(make_pair(line,FIRST));
+        
 
 }
 
@@ -206,12 +206,12 @@ string llvmExpBinOp(Exp* result, Exp* exp1, Exp* exp2, const string& relop, bool
     string reg=freshVar();
     if(relop == "sdiv"){ //div check whether exp2 is zero or not.
         buffer.emit(reg+" = icmp eq i32 0, "+exp2->reg);
-        int line=buffer.emit("br i1 " + reg + ", label @, label @");
-        buffer.bpatch(buffer.makelist(make_pair(line,FIRST)),buffer.genLabel());
+        int line_1=buffer.emit("br i1 " + reg + ", label @, label @");
+        buffer.bpatch(buffer.makelist(make_pair(line_1,FIRST)),buffer.genLabel());
         buffer.emit("call void @print(i8* getelementptr ([23 x i8], [23 x i8]* @.divByZeroErrorCode, i64 0, i64 0))");
         buffer.emit("call void @exit(i32 0)");
-        int end=buffer.emit("br label @");
-        vector<pair<int,BranchLabelIndex>> list = buffer.merge(buffer.makelist(make_pair(line,SECOND)),buffer.makelist(make_pair(end,FIRST)));
+        int line_2=buffer.emit("br label @");
+        vector<pair<int,BranchLabelIndex>> list = buffer.merge(buffer.makelist(make_pair(line_1,SECOND)),buffer.makelist(make_pair(line_2,FIRST)));
         string label = buffer.genLabel();
         buffer.bpatch(list,label);
         if(isByte)  op="udiv";
